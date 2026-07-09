@@ -1,4 +1,4 @@
-import type { FieldDefinition } from './fields.types';
+import type { FieldDefinition } from "./fields.types";
 
 /**
  * Espejan `src/common/types/template.types.ts` de browchar-api (DEV-20).

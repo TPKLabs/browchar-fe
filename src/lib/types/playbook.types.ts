@@ -1,4 +1,4 @@
-import type { TemplateSection } from './template.types';
+import type { TemplateSection } from "./template.types";
 
 /**
  * Espejan `prisma/schemas/Playbook.prisma` + `src/common/types/playbook.types.ts`
@@ -26,7 +26,7 @@ export interface Playbook {
  * Vista de Playbook expuesta por `GET /playbooks` y `GET /playbooks/:id`:
  * el back reemplaza `gameId` por el objeto `game` (id + nombre resueltos).
  */
-export interface PlaybookView extends Omit<Playbook, 'gameId'> {
+export interface PlaybookView extends Omit<Playbook, "gameId"> {
   game: {
     gameId: string;
     gameName: string;
