@@ -14,6 +14,7 @@ a known issue or a future consideration in a commit message.
 
 ### Fixed
 
+- **dev:** pin frontend dev server to port 3001
 - Pre-commit hook (`.husky/pre-commit`) no longer succeeds when an earlier
   step (typecheck) fails — the three checks now run chained with `&&`
   instead of as unchained lines. ([#4](https://github.com/LucianABC/browchar-fe/pull/4))

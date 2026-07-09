@@ -41,7 +41,7 @@ NEXT_PUBLIC_API_URL="http://localhost:3000"
 npm run dev
 ```
 
-The app will be available at `http://localhost:3000` by Next.js default — if the API already uses that port, start the frontend on another (`npm run dev -- -p 3001`).
+The app runs on a fixed port, `http://localhost:3001` (set in the `dev` script), so it never collides with the API's default `http://localhost:3000`.
 
 ---
 
@@ -71,9 +71,9 @@ The commit-msg hook validates the message with commitlint. Commit via `npm run c
 
 ## Troubleshooting
 
-| Problem                               | Fix                                                                                                |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Requests fail / CORS errors           | Check the API is running and `NEXT_PUBLIC_API_URL` matches its URL                                 |
-| Port already in use                   | Start on another port: `npm run dev -- -p 3001`                                                    |
-| Commit rejected by commitlint         | Message must follow Conventional Commits — see the `commit-conventions` skill                      |
-| Commit rejected: "Falta un spec/test" | Add the sibling `*.test.tsx` for the new file, or mark it exempt in `scripts/check-test-pairs.mjs` |
+| Problem                               | Fix                                                                                                                                                      |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Requests fail / CORS errors           | Check the API is running and `NEXT_PUBLIC_API_URL` matches its URL                                                                                       |
+| Port already in use                   | Something else is bound to `3001`; free it or override once: `npm run dev -- -p <other-port>` (and update `NEXT_PUBLIC_API_URL`/CORS config accordingly) |
+| Commit rejected by commitlint         | Message must follow Conventional Commits — see the `commit-conventions` skill                                                                            |
+| Commit rejected: "Falta un spec/test" | Add the sibling `*.test.tsx` for the new file, or mark it exempt in `scripts/check-test-pairs.mjs`                                                       |
