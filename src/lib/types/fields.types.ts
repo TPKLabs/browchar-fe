@@ -8,14 +8,14 @@
  */
 
 export enum FieldType {
-  TEXT = 'TEXT',
-  TEXTAREA = 'TEXTAREA',
-  TEXTNUMBER = 'TEXTNUMBER',
-  COUNTER = 'COUNTER',
-  PROGRESS = 'PROGRESS',
-  SELECT = 'SELECT',
-  CHECKBOX = 'CHECKBOX',
-  RADIO = 'RADIO',
+  TEXT = "TEXT",
+  TEXTAREA = "TEXTAREA",
+  TEXTNUMBER = "TEXTNUMBER",
+  COUNTER = "COUNTER",
+  PROGRESS = "PROGRESS",
+  SELECT = "SELECT",
+  CHECKBOX = "CHECKBOX",
+  RADIO = "RADIO",
 }
 
 export interface FieldDefinition {
@@ -24,12 +24,12 @@ export interface FieldDefinition {
   description?: string;
   required?: boolean;
   type: FieldType;
-  defaultValue?: unknown;
+  defaultValue?: string | number | boolean;
   /** Solo para COUNTER y PROGRESS. */
-  maxValue?: unknown;
+  maxValue?: number;
   disabled?: boolean;
   /** Campos de texto plano, como las Additional Rules. */
   isReadOnly?: boolean;
   /** Solo para SELECT, CHECKBOX, RADIO. */
-  options?: unknown[];
+  options?: { label: string; value: string }[];
 }

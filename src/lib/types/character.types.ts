@@ -3,8 +3,9 @@
  * y los schemas Zod de `src/characters/character.schemas.ts` en browchar-api
  * (DEV-20).
  *
- * Nota sobre fechas: igual que en `playbook.types.ts`, `createdAt`/`updatedAt`
- * llegan como string ISO 8601 (serialización JSON), no como `Date`.
+ * Nota sobre fechas: `createdAt`/`updatedAt` llegan como string ISO 8601
+ * (serialización JSON), no como `Date` — mismo criterio de serialización que
+ * `createdAt` en `playbook.types.ts`, aunque `Playbook` no tiene `updatedAt`.
  */
 export interface Character {
   id: string;
