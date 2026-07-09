@@ -10,6 +10,15 @@ This repo keeps a running `CHANGELOG.md` (Keep a Changelog format) under
 title/body conventions see `pr-conventions`; for commit message wording see
 `commit-conventions`.
 
+## Before writing an entry
+
+Read the existing `### Known Issues` entries first. If this commit resolves
+one (fixes the bug, removes the risky assumption, finishes the deferred
+work), remove that entry — or move it to `### Fixed` if it's now a
+documented fix in its own right — rather than leaving a stale warning next
+to the new entries. Do this even if the commit's main purpose is unrelated;
+a `Known Issues` line that's no longer true is worse than no line at all.
+
 ## When to add an entry
 
 Check this at every commit, not just when opening a PR — the trigger is
