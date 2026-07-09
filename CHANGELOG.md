@@ -1,8 +1,14 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
+This file does **not** log every change. It only tracks, per [Unreleased] release:
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+- **Fixed** — bugs that were actually resolved (`fix:` commits).
+- **Known Issues** — bugs found but intentionally left unresolved, to be fixed later.
+- **Future Considerations** — risks, conflicts, or follow-ups implied by a change made now.
+
+Entries are added automatically by `npm run commit` — see
+[`.claude/skills/changelog/SKILL.md`](.claude/skills/changelog/SKILL.md) for how to flag
+a known issue or a future consideration in a commit message.
 
 ## [Unreleased]
 

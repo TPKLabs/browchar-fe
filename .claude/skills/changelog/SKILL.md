@@ -1,62 +1,57 @@
 ---
 name: changelog
-description: Add CHANGELOG.md entries for bug fixes and forward-looking "Known Issues" (deferred bugs, risky assumptions, TODOs with real consequences) as they're found. Use whenever creating a commit in this repo — not just when opening a PR — so nothing discovered mid-task gets silently lost.
+description: Guide for understanding, running, bypassing, or modifying the automatic CHANGELOG.md updater. Use when the user asks why CHANGELOG.md changed (or didn't), how to flag a known issue or a future consideration in a commit, or how to modify what gets logged.
 ---
 
-# Changelog entries
+# Changelog Automation
 
-This repo keeps a running `CHANGELOG.md` (Keep a Changelog format) under
-`## [Unreleased]`. This skill governs what goes in it and when — for PR
-title/body conventions see `pr-conventions`; for commit message wording see
-`commit-conventions`.
+`CHANGELOG.md` in this repo does **not** log every commit. It only tracks three things, per release:
 
-## Before writing an entry
+- **Fixed** — bugs that were actually resolved.
+- **Known Issues** — bugs found but intentionally left unresolved, to be fixed later.
+- **Future Considerations** — risks, conflicts, or follow-ups implied by a change made now.
 
-Read the existing `### Known Issues` entries first. If this commit resolves
-one (fixes the bug, removes the risky assumption, finishes the deferred
-work), remove that entry — or move it to `### Fixed` if it's now a
-documented fix in its own right — rather than leaving a stale warning next
-to the new entries. Do this even if the commit's main purpose is unrelated;
-a `Known Issues` line that's no longer true is worse than no line at all.
+Ordinary `feat`/`docs`/`refactor`/`chore`/etc. commits with no such implication are **not** logged — this file is a working list of things that need future attention, not a release log of everything shipped.
 
-## When to add an entry
+> This repo uses the same footer-driven model as `browchar-api`, so the criteria for what gets logged (and how) match across front and back.
 
-Check this at every commit, not just when opening a PR — the trigger is
-"did this commit produce one of the two things below," not "is this PR
-titled `fix`."
+## How entries are generated
 
-### `### Fixed`
+Commit via `npm run commit -- -m "type(scope): subject" [-m "body / footers"]` instead of a bare `git commit -m`. This wraps `git commit`:
 
-A bug was actually fixed in this commit. One line per fix, written for
-someone who wasn't there: what was broken, why, and the observable effect —
-not just "fixed bug in X." Link back to the PR (`([#N](url))`) once the PR
-number is known; if committing before the PR exists, add the line without a
-link and fill it in with a follow-up commit once the PR is opened (see the
-`docs(changelog): document PR #4 fixes` commit in this repo's history for
-the pattern).
+1. `scripts/commit.mjs` joins the `-m` flags into the full commit message (subject + body + footers), same as `git commit` itself would.
+2. Before invoking `git commit` at all, it runs the message through `scripts/lib/changelog.mjs`'s `applyChangelogUpdates`, which:
+   - **Pass 1 — clean up first.** Checks the message for `Resolves-known-issue: <snippet>` footers. For each one, it looks through the _existing_ `### Known Issues` entries in `CHANGELOG.md` for a bullet matching that snippet and removes it (dropping the `### Known Issues` heading too if that was the last one).
+   - **Pass 2 — write new entries.**
+     - **Subject line is `fix(...): ...`** → logs the description under `### Fixed`.
+     - **Body/footer has a `Known-issue: <description>` line** → logs `<description>` under `### Known Issues`.
+     - **Body/footer has a `Future-consideration: <description>` line** → logs `<description>` under `### Future Considerations`.
+3. If anything changed, `CHANGELOG.md` is written and `git add`ed **before** `git commit` runs, so the update is already part of the index — no hook trickery needed, and no separate commit is created.
+4. Only then does `scripts/commit.mjs` call the real `git commit -m "<message>"`, which triggers the normal pre-commit and commit-msg hooks (lint-staged, typecheck, tests, commitlint) exactly as if you'd run `git commit` directly.
+5. A single commit can produce zero, one, or several effects (e.g. a `fix:` commit can resolve one known issue via `Resolves-known-issue:` _and_ log a fresh one via `Known-issue:` in the same commit).
+6. Merge commits, `fixup!`/`squash!` commits are skipped entirely.
+7. Duplicate entries (exact same line already present) are not re-added.
 
-### `### Known Issues`
+See the `commit-conventions` skill for the exact footer syntax and examples (`Known-issue:` / `Future-consideration:` / `Resolves-known-issue:`).
 
-A bug was found but not fixed now, or something about this commit carries
-a real future risk: a workaround with a shelf life, an assumption that
-could break, a TODO with actual consequences if ignored. One line per item,
-and be specific about _why it matters_ and _what would need to happen_ to
-resolve it. "There's a TODO in `buildHeaders`" is not an entry;
-"`buildHeaders` has no `Authorization` hook yet (DEV-5 not started) — every
-authenticated endpoint added before then will silently send unauthenticated
-requests" is.
+### Why not a commit-msg hook?
 
-## When NOT to add an entry
+An earlier version of this automation ran from `.husky/commit-msg`. That doesn't work: git computes the tree for the commit being created _before_ the commit-msg hook runs, so a `git add` performed inside that hook only affects the _next_ commit, not the one in progress — it silently leaves `CHANGELOG.md` staged and dangling instead of landing in the same commit. The same is true of `prepare-commit-msg`. Only changes staged before `git commit` starts (or from a `pre-commit` hook, which runs before the tree is computed but also before the message exists) can land in the commit being made — hence the wrapper script.
 
-- Plain `feat`/`chore`/`style`/`docs`/`refactor`/`test` work that carries no
-  bug fix and no forward-looking risk. Most feature commits don't need an
-  entry — only add one if the commit also fixed something or left a known
-  gap worth flagging.
-- Don't restate the PR body's Summary — the changelog is for fixes and
-  risks specifically, not a log of every file touched.
+### If you commit without the wrapper
 
-## Format
+Running a bare `git commit -m "..."` still works and still passes lint-staged/typecheck/tests/commitlint — it just skips the changelog automation entirely (no entry gets logged, and nothing is left dangling). If you did this and the commit should have logged something, add the `CHANGELOG.md` entry by hand, or amend: `npm run commit -- -m "$(git log -1 --pretty=%B)"` after `git reset --soft HEAD~1` re-runs the automation against the same message.
 
-Same as existing entries: one bullet per fix/issue, under `## [Unreleased]`,
-using `### Fixed` / `### Known Issues` (create the subsection if it doesn't
-exist yet, in that order, above any other `###` subsections).
+## Resolving vs. modifying a known issue
+
+- **Fully resolved** → use the `Resolves-known-issue: <snippet>` footer. The snippet only needs to be a substring of the existing bullet (matched case-insensitively, in either direction), so a short phrase from the original entry is enough. No exact copy-paste required.
+- **Partially resolved or reshaped** (the bug changed shape, or only part of it was fixed) → there's no automated footer for this. Edit the bullet directly in `CHANGELOG.md` as part of the same commit — the automation only ever _appends_ or _removes exact matches_, it never rewrites text for you, so a manual edit is the correct move here.
+- If `Resolves-known-issue:` doesn't match any existing bullet (typo, or it was already removed), `scripts/commit.mjs` logs a `[commit] no "Known Issues" entry matched` warning and proceeds with the commit anyway — it does not block it.
+
+## Linking to a PR
+
+The generated `### Fixed` line has no PR link (the PR number isn't known at commit time). If you want the link, add it manually in a follow-up commit once the PR is open, e.g. `([#N](url))` — the same pattern used by earlier entries in this file.
+
+## Failure behavior
+
+The changelog update never blocks a commit. All errors are caught and logged as a warning by `scripts/commit.mjs`; a broken changelog update must never stop you from committing.
