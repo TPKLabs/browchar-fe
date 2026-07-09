@@ -39,3 +39,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   every checkout silently converted the repo's LF files to CRLF, making
   `prettier --check` flag nearly the whole tree with no real edits. Added
   `eol=lf`. ([#4](https://github.com/LucianABC/browchar-fe/pull/4))
+- `apiClient`'s `buildHeaders` merged custom headers with a plain object
+  spread (`{ ...headers }`), which only works when `headers` is a
+  `Record<string, string>` — the type it's declared to accept (`HeadersInit`)
+  also allows a `Headers` instance or a `[string, string][]` tuple array,
+  and both of those were silently dropped or corrupted instead of merged.
+  Now normalizes via `new Headers(...)`.
+  ([#6](https://github.com/LucianABC/browchar-fe/pull/6))
+
+### Known Issues
+
+- `apiClient`'s `request` doesn't catch network-level failures (e.g. `fetch`
+  rejecting with a `TypeError` when offline or on a DNS/CORS failure) — only
+  non-2xx HTTP responses are wrapped in `ApiError`. Callers doing
+  `catch (e) { if (e instanceof ApiError) ... }` will miss network failures
+  entirely and need a separate branch for them until this is addressed.
+  ([#6](https://github.com/LucianABC/browchar-fe/pull/6))

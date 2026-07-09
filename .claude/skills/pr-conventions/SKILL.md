@@ -61,12 +61,14 @@ via a real commit") when the change touches tooling, hooks, or anything
 
 ## Changelog
 
-Any PR whose title type is `fix` (see PR title above) must add an entry to
-`CHANGELOG.md` under `## [Unreleased]` / `### Fixed`, one line per fix,
-linking back to the PR. This is in addition to the PR body's Summary, not
-instead of it — the PR body is for reviewers at review time; the changelog
-is the durable record once it's merged. Don't add changelog entries for
-`feat`/`chore`/`style`/etc. PRs unless they also happen to fix a bug.
+See the `changelog` skill for what goes in `CHANGELOG.md` and when — fixes
+and forward-looking "Known Issues" get logged per-commit as they're found,
+not just when a PR happens to be titled `fix`. Before opening a PR, check
+that every `### Fixed` / `### Known Issues` line produced by this branch's
+commits is present, and that `### Fixed` entries are linked back to this
+PR's number. This is in addition to the PR body's Summary, not instead of
+it — the PR body is for reviewers at review time; the changelog is the
+durable record once it's merged.
 
 ## Base branch and scope
 
