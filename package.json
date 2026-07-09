@@ -13,7 +13,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "commit": "node scripts/commit.mjs",
-    "prepare": "husky"
+    "prepare": "node -e \"if(process.env.CI) process.exit(0)\" || husky"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
