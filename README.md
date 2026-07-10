@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# browchar-web
 
-## Getting Started
+Frontend de Browchar (Next.js). Consume la API en [`browchar-api`](#conexión-con-el-backend).
 
-First, run the development server:
+## Stack
+
+- **Framework:** [Next.js 16](https://nextjs.org/docs) (App Router) + React 19 + TypeScript
+- **UI:** [shadcn/ui](https://ui.shadcn.com/) sobre `@base-ui/react`, Tailwind CSS v4, `class-variance-authority`, `tailwind-merge`
+- **Formularios/validación:** `react-hook-form` + `zod` (vía `@hookform/resolvers`)
+- **Data fetching:** TanStack Query (`@tanstack/react-query`), sobre un cliente HTTP propio en [`src/lib/api/client.ts`](src/lib/api/client.ts)
+- **Testing:** Vitest + Testing Library (jsdom)
+- **Lint/format:** ESLint, Prettier
+- **Git hooks:** Husky + lint-staged, commitlint (Conventional Commits)
+
+## Prerrequisitos
+
+- Node.js 20+
+- npm
+- El backend [`browchar-api`](#conexión-con-el-backend) corriendo localmente (por defecto en `http://localhost:3000`)
+
+## Setup
+
+```bash
+npm install
+```
+
+Esto también deja instalados los git hooks de husky (script `prepare`).
+
+Crear `.env.local` apuntando al back local:
+
+```env
+NEXT_PUBLIC_API_URL="http://localhost:3000"
+```
+
+Levantar el dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) with your browser to see the result (the dev server is pinned to `3001` so it doesn't collide with the API's default `3000`).
+La app corre en `http://localhost:3001` (puerto fijo, seteado en el script `dev`) para no chocar con el puerto por defecto del back (`3000`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Conexión con el backend
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+El front no llama a `fetch` directo: todo pasa por `apiClient` ([`src/lib/api/client.ts`](src/lib/api/client.ts)), que:
 
-## Learn More
+- Resuelve la base URL desde `NEXT_PUBLIC_API_URL`
+- Serializa el body a JSON y setea `Content-Type` por defecto
+- Normaliza errores no-2xx en una `ApiError` (con `status` y, si el back manda el envelope `{ message, errors }`, también `errors: ValidationError[]`)
 
-To learn more about Next.js, take a look at the following resources:
+Todavía no hay autenticación (el hook para agregar `Authorization` ya está en `buildHeaders`, pendiente de que exista sesión).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Si las requests fallan o hay errores de CORS: verificar que la API esté corriendo y que `NEXT_PUBLIC_API_URL` coincida con su URL.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
+| Script                  | Qué hace                                                        |
+| ----------------------- | --------------------------------------------------------------- |
+| `npm run dev`           | Dev server en el puerto 3001                                    |
+| `npm run build`         | Build de producción                                             |
+| `npm start`             | Sirve el build de producción                                    |
+| `npm run lint`          | ESLint                                                          |
+| `npm run typecheck`     | `tsc --noEmit`                                                  |
+| `npm run format`        | Prettier (escribe cambios)                                      |
+| `npm run format:check`  | Prettier (solo chequea)                                         |
+| `npm test` / `test:run` | Vitest (watch / una sola corrida)                               |
+| `npm run commit`        | Commit guiado (Conventional Commits + actualiza `CHANGELOG.md`) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Antes de dar por terminado un cambio, correr `lint`, `typecheck` y `test:run`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Convenciones de commits
+
+Usar `npm run commit -- -m "..."` en vez de `git commit -m` directo, para que el mensaje pase por commitlint y `CHANGELOG.md` se actualice solo. En cada commit corren automáticamente (pre-commit hook): lint-staged (ESLint --fix, chequeo de tests pareados, Prettier), type-check y tests unitarios. En CI (`CI=true`) los hooks de husky se saltean.
+
+Ver también los agentes/skills del repo (`commit-conventions`, `changelog`, `pre-commit`, `first-setup`) para el detalle de cada uno.
