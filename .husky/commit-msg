@@ -1,1 +1,7 @@
+# Advisory only: warns if this commit would have produced a CHANGELOG.md
+# entry but wasn't made via `npm run commit`, so it isn't staged. Runs
+# first (and always exits 0) so it can never mask commitlint's exit code,
+# which must stay last and govern whether the hook blocks the commit.
+node scripts/warn-changelog.mjs "$1"
+
 npx --no-install commitlint --edit "$1"

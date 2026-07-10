@@ -40,7 +40,7 @@ An earlier version of this automation ran from `.husky/commit-msg`. That doesn't
 
 ### If you commit without the wrapper
 
-Running a bare `git commit -m "..."` still works and still passes lint-staged/typecheck/tests/commitlint — it just skips the changelog automation entirely (no entry gets logged, and nothing is left dangling). If you did this and the commit should have logged something, add the `CHANGELOG.md` entry by hand, or amend: `npm run commit -- -m "$(git log -1 --pretty=%B)"` after `git reset --soft HEAD~1` re-runs the automation against the same message.
+Running a bare `git commit -m "..."` still works and still passes lint-staged/typecheck/tests/commitlint — it just skips the changelog automation (no entry gets logged, and nothing is left dangling). `.husky/commit-msg` runs `scripts/warn-changelog.mjs`, which checks whether the message _would_ have produced a changelog entry and, if `CHANGELOG.md` isn't already staged, prints a `[warn-changelog] ...` warning telling you to use `npm run commit` instead — it's advisory only and never blocks the commit (it runs before commitlint in the hook, specifically so it can't mask commitlint's exit code). If you see that warning and the commit should have logged something, add the `CHANGELOG.md` entry by hand, or amend: `npm run commit -- -m "$(git log -1 --pretty=%B)"` after `git reset --soft HEAD~1` re-runs the automation against the same message.
 
 ## Resolving vs. modifying a known issue
 
@@ -54,4 +54,4 @@ The generated `### Fixed` line has no PR link (the PR number isn't known at comm
 
 ## Failure behavior
 
-The changelog update never blocks a commit. All errors are caught and logged as a warning by `scripts/commit.mjs`; a broken changelog update must never stop you from committing.
+The changelog update never blocks a commit. All errors are caught and logged as a warning by `scripts/commit.mjs`; a broken changelog update must never stop you from committing. Same for `scripts/warn-changelog.mjs`: it's advisory only and swallows its own errors.
