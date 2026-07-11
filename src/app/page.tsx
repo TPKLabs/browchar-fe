@@ -53,7 +53,7 @@ export default function Home() {
           <Button
             size="lg"
             nativeButton={false}
-            render={<Link href="/playbooks" />}
+            render={<Link href="/characters/new" />}
           >
             <Plus data-icon="inline-start" />
             Crear personaje

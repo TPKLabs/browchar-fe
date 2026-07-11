@@ -20,10 +20,14 @@ describe("PlaybooksPage", () => {
     expect(screen.getByText("v3")).toBeInTheDocument();
   });
 
-  it("renders a create-character action per playbook", () => {
+  it("links each playbook to the create-character form with its id", () => {
     render(<PlaybooksPage />);
-    expect(
-      screen.getAllByRole("button", { name: "Crear personaje" }),
-    ).toHaveLength(3);
+    // base-ui Button con `nativeButton={false}` renderiza un <a> con role button.
+    const actions = screen.getAllByRole("button", { name: "Crear personaje" });
+    expect(actions).toHaveLength(3);
+    expect(actions[0]).toHaveAttribute(
+      "href",
+      "/characters/new?playbookId=guerrero",
+    );
   });
 });

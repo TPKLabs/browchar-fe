@@ -52,6 +52,41 @@ Todavía no hay autenticación (el hook para agregar `Authorization` ya está en
 
 Si las requests fallan o hay errores de CORS: verificar que la API esté corriendo y que `NEXT_PUBLIC_API_URL` coincida con su URL.
 
+## Estructura del proyecto
+
+El código vive en `src/`, organizado **por responsabilidad, no por co-ubicación
+en la ruta**. Una carpeta de ruta (`src/app/.../`) no debe contener componentes
+reutilizables ni lógica de dominio.
+
+- **`src/app/`** — **rutas** (App Router). Cada `page.tsx` / `layout.tsx` es
+  fino: resuelve `params`/`searchParams`/datos y delega la UI. No hay carpeta
+  `pages/` (eso es el viejo Pages Router). Junto a cada archivo va su test
+  pareado.
+- **`src/components/`** — **UI reutilizable**. Primitivos shadcn/ui en
+  `src/components/ui/` (vendor); componentes de dominio agrupados por entidad en
+  `src/components/<dominio>/` (ej. `src/components/characters/`).
+- **`src/lib/`** — **lógica no-UI**, agrupada por área: `api/` (cliente HTTP),
+  `types/` (tipos de dominio, espejo del back), `mocks/`, y lógica por dominio en
+  `src/lib/<dominio>/` (ej. schemas Zod en `src/lib/characters/`).
+
+**Regla:** un `page.tsx` importa desde `@/components/...` y `@/lib/...` (siempre
+por alias `@/`, nunca relativo profundo). La UI reutilizable y la
+validación/lógica **nunca** viven dentro de la carpeta de la ruta.
+
+Ejemplo — feature "crear personaje" (DEV-50):
+
+```
+src/app/characters/new/page.tsx                    ← ruta (fina)
+src/components/characters/character-create-form.tsx ← UI de dominio
+src/components/characters/dynamic-field.tsx
+src/lib/characters/character-schema.ts             ← validación Zod (no-UI)
+src/lib/mocks/playbooks.ts
+```
+
+Cada archivo nuevo bajo `src/app`, `src/components` o `src/lib` va con su test
+pareado al lado (lo exige el pre-commit), salvo exentos: `*.types.ts`, barrels
+`index.*`, y vendor `components/ui/`.
+
 ## Scripts
 
 | Script                  | Qué hace                                                        |

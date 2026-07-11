@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BookOpen } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -10,42 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { PlaybookView } from "@/lib/types";
-
-/**
- * Placeholder hasta que exista el feature de Playbooks (hook + api module,
- * ver skill add-feature) contra `GET /playbooks`.
- */
-const PLAYBOOKS: PlaybookView[] = [
-  {
-    id: "1",
-    name: "Guerrero",
-    version: 3,
-    createdAt: new Date().toISOString(),
-    description:
-      "Combatiente cuerpo a cuerpo con foco en resistencia y daño físico.",
-    template: [],
-    game: { gameId: "dnd5e", gameName: "D&D 5e" },
-  },
-  {
-    id: "2",
-    name: "Clérigo",
-    version: 2,
-    createdAt: new Date().toISOString(),
-    description: "Sanador y soporte con magia divina.",
-    template: [],
-    game: { gameId: "dnd5e", gameName: "D&D 5e" },
-  },
-  {
-    id: "3",
-    name: "Piromante",
-    version: 1,
-    createdAt: new Date().toISOString(),
-    description: "Especialista en magia de fuego de área.",
-    template: [],
-    game: { gameId: "pathfinder", gameName: "Pathfinder" },
-  },
-];
+import { MOCK_PLAYBOOKS } from "@/lib/mocks/playbooks";
 
 export default function PlaybooksPage() {
   return (
@@ -60,7 +26,7 @@ export default function PlaybooksPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {PLAYBOOKS.map((playbook) => (
+        {MOCK_PLAYBOOKS.map((playbook) => (
           <Card key={playbook.id}>
             <CardHeader>
               <CardTitle className="font-heading flex items-center gap-2 text-lg tracking-wide">
@@ -74,7 +40,15 @@ export default function PlaybooksPage() {
               <Badge variant="outline">v{playbook.version}</Badge>
             </CardContent>
             <CardFooter>
-              <Button className="w-full">Crear personaje</Button>
+              <Button
+                className="w-full"
+                nativeButton={false}
+                render={
+                  <Link href={`/characters/new?playbookId=${playbook.id}`} />
+                }
+              >
+                Crear personaje
+              </Button>
             </CardFooter>
           </Card>
         ))}

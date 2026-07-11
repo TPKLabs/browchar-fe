@@ -23,10 +23,10 @@ describe("Navbar", () => {
     );
   });
 
-  it("renders a CTA linking to playbooks to start creating a character", () => {
+  it("renders a CTA linking straight to the character creation screen", () => {
     render(<Navbar />);
     expect(
       screen.getByRole("button", { name: "Crear personaje" }),
-    ).toHaveAttribute("href", "/playbooks");
+    ).toHaveAttribute("href", "/characters/new");
   });
 });

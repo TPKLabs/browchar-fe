@@ -33,7 +33,7 @@ export function Navbar() {
           ))}
         </nav>
 
-        <Button nativeButton={false} render={<Link href="/playbooks" />}>
+        <Button nativeButton={false} render={<Link href="/characters/new" />}>
           Crear personaje
         </Button>
       </div>

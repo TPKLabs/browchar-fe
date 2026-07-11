@@ -14,6 +14,7 @@ a known issue or a future consideration in a commit message.
 
 ### Fixed
 
+- **characters:** point home CTA to the creation form ([#16](https://github.com/LucianABC/browchar-fe/pull/16))
 - **dev:** pin frontend dev server to port 3001
 - Pre-commit hook (`.husky/pre-commit`) no longer succeeds when an earlier
   step (typecheck) fails — the three checks now run chained with `&&`
@@ -62,3 +63,8 @@ a known issue or a future consideration in a commit message.
   `catch (e) { if (e instanceof ApiError) ... }` will miss network failures
   entirely and need a separate branch for them until this is addressed.
   ([#6](https://github.com/LucianABC/browchar-fe/pull/6))
+
+### Future Considerations
+
+- character-schema.ts reimplements the backend template validation by hand. Two FE-local guesses should be aligned with the shared source of truth in DEV-153: min(0) is applied to TEXTNUMBER (which may legitimately allow negatives), and isReadOnly fields are still validated (an isReadOnly + required field could block submit).
+- submit is a local stub via an onSubmit seam. The real POST /characters mutation (TanStack Query) plus a QueryClientProvider still need wiring in the API-integration subtask before characters actually persist.
