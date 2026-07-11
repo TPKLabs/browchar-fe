@@ -1,10 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+
+vi.mock("@/components/characters/character-create-form-container", () => ({
+  CharacterCreateFormContainer: ({
+    initialPlaybookId,
+  }: {
+    initialPlaybookId?: string;
+  }) => <div>container con playbookId={initialPlaybookId ?? "ninguno"}</div>,
+}));
 
 import NewCharacterPage from "./page";
 
 describe("NewCharacterPage", () => {
-  it("preselects the playbook from the query param", async () => {
+  it("pasa el playbookId del query param al container", async () => {
     // Async Server Component sin hijos async: se invoca como función y se
     // renderiza el resultado (patrón soportado por Vitest + RTL).
     const ui = await NewCharacterPage({
@@ -13,22 +21,18 @@ describe("NewCharacterPage", () => {
     render(ui);
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "Crear personaje" }),
+      screen.getByText("container con playbookId=guerrero"),
     ).toBeInTheDocument();
-    // Con un playbook preseleccionado se muestra el campo name del form.
-    expect(screen.getByLabelText(/Nombre/)).toBeInTheDocument();
-    // Y un campo propio del template del Guerrero.
-    expect(screen.getByLabelText(/Concepto/)).toBeInTheDocument();
   });
 
-  it("prompts for a game and playbook when the query param is missing or unknown", async () => {
+  it("pasa undefined cuando no hay query param", async () => {
     const ui = await NewCharacterPage({
-      searchParams: Promise.resolve({ playbookId: "nope" }),
+      searchParams: Promise.resolve({}),
     });
     render(ui);
 
     expect(
-      screen.getByText("Elegí un juego y un playbook para empezar."),
+      screen.getByText("container con playbookId=ninguno"),
     ).toBeInTheDocument();
   });
 });

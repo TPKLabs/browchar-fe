@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cinzel, Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
+import { QueryProvider } from "@/components/providers/query-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,8 +35,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <Navbar />
-        <main className="flex flex-1 flex-col">{children}</main>
+        <QueryProvider>
+          <Navbar />
+          <main className="flex flex-1 flex-col">{children}</main>
+        </QueryProvider>
       </body>
     </html>
   );
