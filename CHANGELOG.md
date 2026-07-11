@@ -66,4 +66,5 @@ a known issue or a future consideration in a commit message.
 
 ### Future Considerations
 
+- character-schema.ts reimplements the backend template validation by hand. Two FE-local guesses should be aligned with the shared source of truth in DEV-153: min(0) is applied to TEXTNUMBER (which may legitimately allow negatives), and isReadOnly fields are still validated (an isReadOnly + required field could block submit).
 - submit is a local stub via an onSubmit seam. The real POST /characters mutation (TanStack Query) plus a QueryClientProvider still need wiring in the API-integration subtask before characters actually persist.

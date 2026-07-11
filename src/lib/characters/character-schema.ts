@@ -18,6 +18,12 @@ import {
  * que se documenta acá en vez de adivinar).
  *
  * La integración real con la API va en otra subtask; acá solo validamos local.
+ *
+ * DEUDA (DEV-153): estas reglas por-`FieldType` son una reimplementación a mano
+ * de la validación de template del back (`template-validation.ts`), con riesgo
+ * de drift. Cuando se unifiquen los tipos/validación bajo una única fuente de
+ * verdad (Prisma/Zod compartido), este builder debería derivarse de ahí en vez
+ * de mantenerse acá. Ver los dos puntos marcados con `DEV-153` más abajo.
  */
 
 /** Forma del form en react-hook-form. `values` es dinámico (clave = `field.id`). */
@@ -56,6 +62,9 @@ function numberFieldSchema(field: FieldDefinition): z.ZodTypeAny {
         return undefined;
       },
     })
+    // DEV-153: `min(0)` se aplica también a TEXTNUMBER, que podría admitir
+    // negativos (ej. un modificador). Es una regla local del FE; la definitiva
+    // debe venir de la validación de template unificada con el back.
     .min(0, `${field.label} no puede ser negativo`);
 
   // maxValue solo aplica a COUNTER/PROGRESS (ver FieldDefinition).
@@ -135,6 +144,9 @@ export function templateFields(
 export function buildCharacterSchema(playbook: PlaybookView | undefined) {
   const shape: Record<string, z.ZodTypeAny> = {};
   for (const field of templateFields(playbook)) {
+    // DEV-153: se validan también los campos `isReadOnly` (display-only); un
+    // `isReadOnly` + `required` podría bloquear el submit sin forma de editarlo.
+    // El tratamiento correcto debe venir de la fuente única, no adivinarse acá.
     shape[field.id] = fieldSchema(field);
   }
 
