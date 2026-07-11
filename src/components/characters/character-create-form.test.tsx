@@ -97,7 +97,11 @@ describe("CharacterCreateForm", () => {
       target: { value: "Aria" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Crear personaje" }));
-    expect(await screen.findByText("Clase es obligatorio")).toBeInTheDocument();
+    // DEV-153: el wording ahora viene del paquete compartido (back = fuente de
+    // verdad), que rodea el label con comillas.
+    expect(
+      await screen.findByText('"Clase" es obligatorio'),
+    ).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

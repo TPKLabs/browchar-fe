@@ -16,6 +16,11 @@ ruta nunca contiene componentes reutilizables ni lógica de dominio.
   en `src/components/ui/`).
 - `src/lib/<dominio>/` = **lógica no-UI** (schemas Zod, helpers). Tipos en
   `src/lib/types/`, cliente HTTP en `src/lib/api/`, mocks en `src/lib/mocks/`.
+  Los tipos y la validación de dominio compartidos con la API (`FieldType`,
+  `FieldDefinition`, `buildTemplateSchema`, los schemas de request) vienen del
+  paquete `@tpklabs/browchar-contracts` — no los redefinas a mano (DEV-153).
+  `src/lib/types/*` re-exporta de ahí por compatibilidad; código nuevo importa
+  directo del paquete.
 
 Importá siempre por alias `@/...`. Todo archivo nuevo bajo `src/app|components|lib`
 va con su test pareado (salvo `*.types.ts`, `index.*` y `components/ui/`). Ver

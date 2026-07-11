@@ -1,15 +1,8 @@
-import type { FieldDefinition } from "./fields.types";
-
 /**
- * Espejan `src/common/types/template.types.ts` de browchar-api (DEV-20).
+ * Tipos de dominio — Template.
  *
- * El `template` de un Playbook (JSON en la DB) se serializa como
- * `TemplateSection[]` — así lo consume el template validator del back
- * (`template-validation.ts`) y así llega en `Playbook.template` por la API.
+ * DEV-153: la forma del `template` de un Playbook vive en el paquete compartido
+ * `@tpklabs/browchar-contracts` (fuente de verdad única FE/BE). Se re-exporta
+ * desde acá para no romper los imports internos (`@/lib/types`).
  */
-export interface TemplateSection {
-  id: string;
-  title?: string;
-  description?: string;
-  fields?: FieldDefinition[];
-}
+export type { TemplateSection, Template } from "@tpklabs/browchar-contracts";
