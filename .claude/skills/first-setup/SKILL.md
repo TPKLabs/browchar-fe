@@ -17,6 +17,22 @@ Follow these steps in order. Each step must succeed before moving to the next.
 
 ## 1. Install dependencies
 
+> **A GitHub token is required before this step.** The app depends on
+> `@tpklabs/browchar-contracts` (shared FE/BE types + validation, DEV-153),
+> published **privately** to GitHub Packages — `npm install` fetches it from
+> there and will fail with `401`/`403` without auth. Set it up first (one time):
+>
+> 1. Create a Personal Access Token (classic) with the **`read:packages`** scope
+>    at GitHub → Settings → Developer settings → Tokens (classic). Or, if you use
+>    the GitHub CLI: `gh auth refresh -s read:packages`.
+> 2. Put it in your environment — never in a committed file:
+>    - Windows: `setx GITHUB_TOKEN "ghp_…"` (open a new shell afterwards)
+>    - macOS/Linux: add `export GITHUB_TOKEN=…` to your `~/.bashrc` / `~/.zshrc`
+>
+> The repo's `.npmrc` maps the `@tpklabs` scope to GitHub Packages and reads the
+> token from `${GITHUB_TOKEN}`. Full security notes (minimal scope, expiration,
+> leak response) live in the API repo: `docs/security/github-packages-token.md`.
+
 ```bash
 npm install
 ```
@@ -71,9 +87,10 @@ The commit-msg hook validates the message with commitlint. Commit via `npm run c
 
 ## Troubleshooting
 
-| Problem                               | Fix                                                                                                                                                      |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Requests fail / CORS errors           | Check the API is running and `NEXT_PUBLIC_API_URL` matches its URL                                                                                       |
-| Port already in use                   | Something else is bound to `3001`; free it or override once: `npm run dev -- -p <other-port>` (and update `NEXT_PUBLIC_API_URL`/CORS config accordingly) |
-| Commit rejected by commitlint         | Message must follow Conventional Commits — see the `commit-conventions` skill                                                                            |
-| Commit rejected: "Falta un spec/test" | Add the sibling `*.test.tsx` for the new file, or mark it exempt in `scripts/check-test-pairs.mjs`                                                       |
+| Problem                                                               | Fix                                                                                                                                                      |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Requests fail / CORS errors                                           | Check the API is running and `NEXT_PUBLIC_API_URL` matches its URL                                                                                       |
+| Port already in use                                                   | Something else is bound to `3001`; free it or override once: `npm run dev -- -p <other-port>` (and update `NEXT_PUBLIC_API_URL`/CORS config accordingly) |
+| Commit rejected by commitlint                                         | Message must follow Conventional Commits — see the `commit-conventions` skill                                                                            |
+| Commit rejected: "Falta un spec/test"                                 | Add the sibling `*.test.tsx` for the new file, or mark it exempt in `scripts/check-test-pairs.mjs`                                                       |
+| `npm install` fails with `401`/`403` on `@tpklabs/browchar-contracts` | `GITHUB_TOKEN` not set or missing `read:packages` — see step 1                                                                                           |

@@ -77,11 +77,27 @@ describe("buildCharacterSchema", () => {
         },
       ]),
     );
+    // La fuente única (back) valida `min(1)` sin `.trim()`: un string vacío se
+    // rechaza. (El trim de whitespace-only es un gap heredado del back — ver
+    // CHANGELOG Future Considerations de DEV-153.)
     const result = schema.safeParse({
       name: "Aria",
-      values: { concepto: "   " },
+      values: { concepto: "" },
     });
     expect(result.success).toBe(false);
+  });
+
+  it("allows negative numeric values (no min(0))", () => {
+    // DEV-153: el `.min(0)` local del FE se eliminó — un modificador negativo
+    // es válido, alineado con la validación de template del back.
+    const schema = buildCharacterSchema(
+      playbookWith([
+        { id: "mod", label: "Modificador", type: FieldType.TEXTNUMBER },
+      ]),
+    );
+    expect(schema.safeParse({ name: "A", values: { mod: "-2" } }).success).toBe(
+      true,
+    );
   });
 
   it("enforces maxValue on COUNTER/PROGRESS", () => {
@@ -148,7 +164,10 @@ describe("buildCharacterSchema", () => {
     ).toBe(true);
   });
 
-  it("requires a required checkbox to be checked", () => {
+  it("accepts a required checkbox whether checked or not", () => {
+    // DEV-153: en la fuente única (back), un checkbox `required` sin `options`
+    // sólo debe ser booleano — `false` es válido (los checkboxes del dominio son
+    // toggles/condiciones, no consentimientos "debe estar tildado").
     const schema = buildCharacterSchema(
       playbookWith([
         {
@@ -161,7 +180,7 @@ describe("buildCharacterSchema", () => {
     );
     expect(
       schema.safeParse({ name: "A", values: { terms: false } }).success,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       schema.safeParse({ name: "A", values: { terms: true } }).success,
     ).toBe(true);

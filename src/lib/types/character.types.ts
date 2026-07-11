@@ -1,12 +1,24 @@
 /**
- * Espejan `prisma/schemas/Character.prisma` + `src/common/types/character.types.ts`
- * y los schemas Zod de `src/characters/character.schemas.ts` en browchar-api
- * (DEV-20).
+ * Tipos de dominio — Character.
+ *
+ * `Character` / `CharacterView` espejan `prisma/schemas/Character.prisma` de
+ * browchar-api: son la forma de *respuesta* de la API (derivada de Prisma), que
+ * el paquete compartido todavía no expone, así que se mantienen acá.
+ *
+ * DEV-153: los contratos de *request* (`CreateCharacterInput`,
+ * `ListCharactersQuery`) y `ValidationError` ahora se derivan de los schemas Zod
+ * de `@tpklabs/browchar-contracts` (fuente de verdad única FE/BE) — antes eran
+ * copias a mano que podían driftear del back.
  *
  * Nota sobre fechas: `createdAt`/`updatedAt` llegan como string ISO 8601
- * (serialización JSON), no como `Date` — mismo criterio de serialización que
- * `createdAt` en `playbook.types.ts`, aunque `Playbook` no tiene `updatedAt`.
+ * (serialización JSON), no como `Date`.
  */
+export type {
+  CreateCharacterInput,
+  ListCharactersQuery,
+  ValidationError,
+} from "@tpklabs/browchar-contracts";
+
 export interface Character {
   id: string;
   name: string;
@@ -22,40 +34,3 @@ export interface Character {
 
 /** Vista de Character expuesta por `GET /characters` y `GET /characters/:id`. */
 export type CharacterView = Character;
-
-/**
- * Error de validación de un campo de `values` contra el template, o de un
- * campo del request (Zod). Forma de cada item de `errors` en las respuestas
- * 400 del back.
- */
-export interface ValidationError {
-  field: string;
-  message: string;
-}
-
-/**
- * Espejo de `createCharacterSchema` (back). El front debe construir su propio
- * schema Zod equivalente para validar el form antes de enviar (mismos
- * mensajes que el back) — este type es el contrato mínimo que el body debe
- * cumplir.
- */
-export interface CreateCharacterInput {
-  name: string;
-  playbookId: string;
-  /** Sin auth todavía (DEV-5): viaja en el body en modo dev. */
-  ownerId: string;
-  values?: Record<string, unknown>;
-}
-
-/**
- * Espejo de `listCharactersQuerySchema` (back). `page`/`pageSize` viajan como
- * query params string sobre HTTP; acá se tipan ya coercionados a number para
- * que el cliente API los use antes de serializar la URL.
- */
-export interface ListCharactersQuery {
-  playbookId?: string;
-  gameId?: string;
-  search?: string;
-  page?: number;
-  pageSize?: number;
-}

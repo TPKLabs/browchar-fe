@@ -66,5 +66,6 @@ a known issue or a future consideration in a commit message.
 
 ### Future Considerations
 
-- character-schema.ts reimplements the backend template validation by hand. Two FE-local guesses should be aligned with the shared source of truth in DEV-153: min(0) is applied to TEXTNUMBER (which may legitimately allow negatives), and isReadOnly fields are still validated (an isReadOnly + required field could block submit).
+- `buildTemplateSchema` (shared `@tpklabs/browchar-contracts`) validates required text with `min(1)` but no `.trim()`, so a whitespace-only value (`"   "`) satisfies a required text field. Inherited from the backend's original template validation and adopted as-is when unifying in DEV-153; tightening it (trim in the shared builder) is a change to the published package + API — candidate for a `0.2.0`.
+- FE response types (`Character` / `CharacterView`, pagination envelope) are still hand-written in `src/lib/types` — `@tpklabs/browchar-contracts` only owns request/template contracts so far. If the API's Prisma-derived response shapes change, these can drift until the package exposes them too.
 - submit is a local stub via an onSubmit seam. The real POST /characters mutation (TanStack Query) plus a QueryClientProvider still need wiring in the API-integration subtask before characters actually persist.
