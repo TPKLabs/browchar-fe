@@ -16,7 +16,7 @@ Frontend de Browchar (Next.js). Consume la API en [`browchar-api`](#conexión-co
 
 - Node.js 20+
 - npm
-- El backend [`browchar-api`](#conexión-con-el-backend) corriendo localmente (por defecto en `http://localhost:3000`)
+- Una API de Browchar a la que apuntar — local o desplegada. Ver [Cómo correr la app](#cómo-correr-la-app).
 
 ## Setup
 
@@ -26,10 +26,10 @@ npm install
 
 Esto también deja instalados los git hooks de husky (script `prepare`).
 
-Crear `.env.local` apuntando al back local:
+Copiar el archivo de ejemplo de entorno y ajustarlo según el modo que uses (ver abajo):
 
-```env
-NEXT_PUBLIC_API_URL="http://localhost:3000"
+```bash
+cp .env.example .env.local
 ```
 
 Levantar el dev server:
@@ -39,6 +39,65 @@ npm run dev
 ```
 
 La app corre en `http://localhost:3001` (puerto fijo, seteado en el script `dev`) para no chocar con el puerto por defecto del back (`3000`).
+
+## Cómo correr la app
+
+El front no tiene backend propio: consume `browchar-api`. A qué API apunta se
+controla **únicamente** con `NEXT_PUBLIC_API_URL` (leída en
+[`src/lib/api/client.ts`](src/lib/api/client.ts)). Hay dos modos.
+
+### Modo A — Todo local (desarrollo del stack completo)
+
+Para trabajar sobre el back y el front a la vez. Requiere **PostgreSQL corriendo
+en `localhost:5432`** con el usuario/DB del `.env` del back (`nest_user` /
+`rpg_sheets_db`).
+
+1. **Backend** — en `browchar-api` (ver su Skill `first-setup` para el detalle):
+
+   ```bash
+   cd ../browchar-api
+   npx prisma migrate deploy   # aplica migraciones
+   npx prisma generate         # genera el client
+   npx tsx prisma/seed.ts      # carga systems, games y playbooks
+   npm run start:dev           # API en http://localhost:3000
+   ```
+
+2. **Frontend** — en este repo, `.env.local`:
+
+   ```env
+   NEXT_PUBLIC_API_URL="http://localhost:3000"
+   ```
+
+   ```bash
+   npm run dev                 # http://localhost:3001
+   ```
+
+> Si `/playbooks` (o el form de creación) queda en "Cargando…" y luego muestra
+> "No se pudieron cargar los playbooks", casi siempre es que la API no está
+> levantada o la DB no está seedeada: revisá el paso 1.
+
+### Modo B — Front local contra la API de producción
+
+Para iterar sobre el front sin levantar Postgres + API localmente. Apunta el
+front a la API ya desplegada.
+
+En `.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL="https://<api-en-railway>.up.railway.app"
+```
+
+```bash
+npm run dev                   # http://localhost:3001, pegándole a prod
+```
+
+> La API se despliega en **Railway** y este front en **Vercel** (épic DEV-163;
+> ver `deployment-plan`). Mientras la API no esté desplegada, esta URL todavía no
+> existe y sólo aplica el Modo A. Cuando esté arriba, reemplazá el placeholder
+> por la URL pública real de Railway.
+>
+> El front **desplegado** (Vercel) usa esta misma variable, pero seteada como
+> Environment Variable del proyecto en Vercel — no vía `.env.local`.
 
 ## Conexión con el backend
 
