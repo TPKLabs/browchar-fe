@@ -16,5 +16,6 @@
 export * from "./fields.types";
 export * from "./template.types";
 export * from "./playbook.types";
+export * from "./game.types";
 export * from "./character.types";
 export * from "./pagination.types";

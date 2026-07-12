@@ -13,14 +13,15 @@ describe("Home", () => {
     ).toBeInTheDocument();
   });
 
-  it("links the quick actions to character creation and the playbooks page", () => {
+  it("links the quick actions to character creation and the games page", () => {
     render(<Home />);
     expect(
       screen.getByRole("button", { name: /crear personaje/i }),
     ).toHaveAttribute("href", "/characters/new");
-    expect(
-      screen.getByRole("button", { name: /ver playbooks/i }),
-    ).toHaveAttribute("href", "/playbooks");
+    expect(screen.getByRole("button", { name: /ver juegos/i })).toHaveAttribute(
+      "href",
+      "/games",
+    );
   });
 
   it("renders the recent characters", () => {

@@ -1,22 +1,17 @@
 "use client";
 
-import Link from "next/link";
-import { BookOpen, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { usePlaybooks } from "@/lib/playbooks/use-playbooks";
+import { PlaybookCard } from "./playbook-card";
 
-export function PlaybooksList() {
-  const { data: playbooks, isPending, isError } = usePlaybooks();
+interface PlaybooksListProps {
+  /** Si viene, filtra los playbooks por juego (server-side, `?gameId=`). */
+  gameId?: string;
+}
+
+export function PlaybooksList({ gameId }: PlaybooksListProps = {}) {
+  const { data: playbooks, isPending, isError } = usePlaybooks(gameId);
 
   if (isPending) {
     return (
@@ -41,33 +36,18 @@ export function PlaybooksList() {
     );
   }
 
+  if (playbooks.length === 0) {
+    return (
+      <p className="text-muted-foreground rounded-lg border border-dashed p-10 text-center text-sm">
+        No hay playbooks disponibles todavía.
+      </p>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {playbooks.map((playbook) => (
-        <Card key={playbook.id}>
-          <CardHeader>
-            <CardTitle className="font-heading flex items-center gap-2 text-lg tracking-wide">
-              <BookOpen className="text-primary size-4" aria-hidden />
-              {playbook.name}
-            </CardTitle>
-            <CardDescription>{playbook.description}</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <Badge variant="secondary">{playbook.game.gameName}</Badge>
-            <Badge variant="outline">v{playbook.version}</Badge>
-          </CardContent>
-          <CardFooter>
-            <Button
-              className="w-full"
-              nativeButton={false}
-              render={
-                <Link href={`/characters/new?playbookId=${playbook.id}`} />
-              }
-            >
-              Crear personaje
-            </Button>
-          </CardFooter>
-        </Card>
+        <PlaybookCard key={playbook.id} playbook={playbook} />
       ))}
     </div>
   );

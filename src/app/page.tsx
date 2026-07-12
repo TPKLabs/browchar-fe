@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Plus, Swords } from "lucide-react";
+import { Dices, Plus, Swords } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,8 +46,8 @@ export default function Home() {
           Bienvenido de nuevo, aventurero
         </h1>
         <p className="text-muted-foreground max-w-2xl text-base">
-          Retomá donde dejaste tus personajes o explorá los playbooks
-          disponibles para armar uno nuevo.
+          Retomá donde dejaste tus personajes o explorá los juegos disponibles
+          para armar uno nuevo.
         </p>
         <div className="mt-2 flex flex-wrap gap-3">
           <Button
@@ -62,10 +62,10 @@ export default function Home() {
             size="lg"
             variant="outline"
             nativeButton={false}
-            render={<Link href="/playbooks" />}
+            render={<Link href="/games" />}
           >
-            <BookOpen data-icon="inline-start" />
-            Ver playbooks
+            <Dices data-icon="inline-start" />
+            Ver juegos
           </Button>
         </div>
       </section>

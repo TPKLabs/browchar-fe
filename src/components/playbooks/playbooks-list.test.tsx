@@ -114,4 +114,27 @@ describe("PlaybooksList", () => {
       "No se pudieron cargar los playbooks",
     );
   });
+
+  it("muestra un estado vacío cuando no hay playbooks", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(200, [])));
+
+    renderWithClient(<PlaybooksList />);
+
+    expect(
+      await screen.findByText("No hay playbooks disponibles todavía."),
+    ).toBeInTheDocument();
+  });
+
+  it("pide los playbooks filtrados por gameId cuando se pasa uno", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(mockResponse(200, [PLAYBOOKS[0]]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithClient(<PlaybooksList gameId="dnd5e" />);
+
+    await screen.findByText("Guerrero");
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toBe("/playbooks?gameId=dnd5e");
+  });
 });

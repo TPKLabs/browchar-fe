@@ -11,11 +11,15 @@ describe("Navbar", () => {
     );
   });
 
-  it("renders navigation links to the dashboard and playbooks", () => {
+  it("renders navigation links to the dashboard, games and playbooks", () => {
     render(<Navbar />);
     expect(screen.getByRole("button", { name: "Dashboard" })).toHaveAttribute(
       "href",
       "/",
+    );
+    expect(screen.getByRole("button", { name: "Juegos" })).toHaveAttribute(
+      "href",
+      "/games",
     );
     expect(screen.getByRole("button", { name: "Playbooks" })).toHaveAttribute(
       "href",
