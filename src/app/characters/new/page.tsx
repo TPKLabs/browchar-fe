@@ -1,12 +1,12 @@
-import { CharacterCreateForm } from "@/components/characters/character-create-form";
-import { MOCK_PLAYBOOKS, getMockPlaybook } from "@/lib/mocks/playbooks";
+import { CharacterCreateFormContainer } from "@/components/characters/character-create-form-container";
 
 /**
  * Ruta de creación de personaje (DEV-50).
  *
  * Se llega desde el CTA "Crear personaje" (juego + playbook se eligen acá) o
  * con `?playbookId=X` desde una tarjeta de Playbooks, que preselecciona el
- * juego y el playbook. La integración real con la API va en otra subtask.
+ * juego y el playbook. Los playbooks se traen reales vía
+ * `CharacterCreateFormContainer` (DEV-160).
  */
 export default async function NewCharacterPage({
   searchParams,
@@ -14,12 +14,6 @@ export default async function NewCharacterPage({
   searchParams: Promise<{ playbookId?: string }>;
 }) {
   const { playbookId } = await searchParams;
-  const initialPlaybook = getMockPlaybook(playbookId);
 
-  return (
-    <CharacterCreateForm
-      playbooks={MOCK_PLAYBOOKS}
-      initialPlaybookId={initialPlaybook?.id}
-    />
-  );
+  return <CharacterCreateFormContainer initialPlaybookId={playbookId} />;
 }
