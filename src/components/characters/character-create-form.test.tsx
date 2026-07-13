@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { FieldType, type PlaybookView } from "@/lib/types";
+import { ApiError } from "@/lib/api/client";
 import { CharacterCreateForm } from "./character-create-form";
 
 const SIMPLE: PlaybookView = {
@@ -125,6 +126,32 @@ describe("CharacterCreateForm", () => {
     expect(
       screen.getByRole("button", { name: "Crear personaje" }),
     ).not.toBeDisabled();
+  });
+
+  it("mapea los errores de validación del back (400) al campo del template", async () => {
+    const onSubmit = vi
+      .fn()
+      .mockRejectedValue(
+        new ApiError(
+          400,
+          "Los datos del personaje no son válidos para el Playbook",
+          [{ field: "nota", message: "La nota no es válida" }],
+        ),
+      );
+    render(
+      <CharacterCreateForm
+        playbooks={PLAYBOOKS}
+        initialPlaybookId="simple"
+        onSubmit={onSubmit}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText(/Nombre/), {
+      target: { value: "Aria" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Crear personaje" }));
+
+    // El mensaje aparece al lado del campo `nota`, no solo como error general.
+    expect(await screen.findByText("La nota no es válida")).toBeInTheDocument();
   });
 
   it("disables submit and shows a loading label while onSubmit is pending", async () => {

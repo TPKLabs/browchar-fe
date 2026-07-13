@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { CreateCharacterInput, PlaybookView } from "@/lib/types";
+import { ApiError } from "@/lib/api/client";
 
 import {
   buildCharacterSchema,
@@ -105,6 +106,7 @@ export function CharacterCreateForm({
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<CharacterFormValues>({
     resolver,
@@ -148,6 +150,18 @@ export function CharacterCreateForm({
       await onSubmit(input);
       setCreatedName(input.name);
     } catch (error) {
+      // 400 de validación del back: además del mensaje general, mapeamos cada
+      // `{ field, message }` al campo del form para que el error se muestre al
+      // lado del control (vía `fieldError`). En la práctica es raro porque el
+      // front valida con el mismo schema, pero cubre divergencias FE/BE.
+      if (error instanceof ApiError && error.errors?.length) {
+        for (const fieldErr of error.errors) {
+          setError(`values.${fieldErr.field}` as `values.${string}`, {
+            type: "server",
+            message: fieldErr.message,
+          });
+        }
+      }
       setSubmitError(
         error instanceof Error
           ? error.message
