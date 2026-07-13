@@ -152,7 +152,7 @@ describe("CharacterCreateForm", () => {
 
     resolveSubmit();
     expect(
-      await screen.findByText(/Personaje «Aria» listo para crear\./),
+      await screen.findByText(/Personaje «Aria» creado\./),
     ).toBeInTheDocument();
   });
 
@@ -174,11 +174,11 @@ describe("CharacterCreateForm", () => {
     expect(onSubmit).toHaveBeenCalledWith({
       name: "Aria",
       playbookId: "simple",
-      ownerId: "dev-owner",
+      ownerId: "usr_demo",
       values: { nota: "" },
     });
     expect(
-      await screen.findByText(/Personaje «Aria» listo para crear\./),
+      await screen.findByText(/Personaje «Aria» creado\./),
     ).toBeInTheDocument();
   });
 });

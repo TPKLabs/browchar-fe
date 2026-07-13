@@ -3,6 +3,7 @@
 import { Loader2 } from "lucide-react";
 
 import { usePlaybooks } from "@/lib/playbooks/use-playbooks";
+import { useCreateCharacter } from "@/lib/characters/use-create-character";
 import { CharacterCreateForm } from "./character-create-form";
 
 interface CharacterCreateFormContainerProps {
@@ -18,6 +19,7 @@ export function CharacterCreateFormContainer({
   initialPlaybookId,
 }: CharacterCreateFormContainerProps) {
   const { data: playbooks, isPending, isError } = usePlaybooks();
+  const createCharacter = useCreateCharacter();
 
   if (isPending) {
     return (
@@ -46,6 +48,12 @@ export function CharacterCreateFormContainer({
     <CharacterCreateForm
       playbooks={playbooks}
       initialPlaybookId={initialPlaybookId}
+      // `mutateAsync` rechaza con `ApiError` en fallo; el form lo captura y
+      // muestra su estado de error. Devolvemos `void` porque el form no usa
+      // el personaje creado (el listado/detalle son otras subtasks).
+      onSubmit={(input) =>
+        createCharacter.mutateAsync(input).then(() => undefined)
+      }
     />
   );
 }

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 
 import { FieldType, type PlaybookView } from "@/lib/types";
@@ -33,7 +33,7 @@ function mockResponse(status: number, body?: unknown) {
 
 function renderWithClient(ui: ReactNode) {
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return render(
     <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
@@ -88,5 +88,43 @@ describe("CharacterCreateFormContainer", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "No se pudieron cargar los playbooks",
     );
+  });
+
+  it("al enviar, postea el personaje a POST /characters y muestra éxito", async () => {
+    // Router por URL: GET /playbooks -> lista; POST /characters -> creado.
+    const fetchMock = vi.fn((url: string, _init?: RequestInit) =>
+      Promise.resolve(
+        String(url).startsWith("/characters")
+          ? mockResponse(201, { id: "char-1", name: "Aria" })
+          : mockResponse(200, PLAYBOOKS),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithClient(
+      <CharacterCreateFormContainer initialPlaybookId="guerrero" />,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/Nombre/), {
+      target: { value: "Aria" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Crear personaje" }));
+
+    expect(
+      await screen.findByText(/Personaje «Aria» creado\./),
+    ).toBeInTheDocument();
+
+    const postCall = fetchMock.mock.calls.find((c) =>
+      String(c[0]).startsWith("/characters"),
+    );
+    expect(postCall).toBeTruthy();
+    const init = postCall![1]!;
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({
+      name: "Aria",
+      playbookId: "guerrero",
+      ownerId: "usr_demo",
+      values: { concepto: "" },
+    });
   });
 });

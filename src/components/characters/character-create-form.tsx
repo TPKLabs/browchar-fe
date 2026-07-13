@@ -33,8 +33,12 @@ import {
 } from "@/lib/characters/character-schema";
 import { DynamicField } from "./dynamic-field";
 
-/** Sin auth todavía (DEV-5): el owner viaja hardcodeado en modo dev. */
-const DEV_OWNER_ID = "dev-owner";
+/**
+ * Sin auth todavía (DEV-5): el owner viaja hardcodeado en modo dev. Es el
+ * usuario demo que crea el seed de browchar-api (`usr_demo`), para que
+ * `POST /characters` no falle con "User no encontrado".
+ */
+const DEV_OWNER_ID = "usr_demo";
 
 interface CharacterCreateFormProps {
   playbooks: PlaybookView[];
@@ -230,11 +234,10 @@ export function CharacterCreateForm({
         >
           <p className="flex items-center gap-2 font-medium">
             <CircleCheck className="text-primary size-5" aria-hidden />
-            Personaje «{createdName}» listo para crear.
+            Personaje «{createdName}» creado.
           </p>
           <p className="text-muted-foreground text-sm">
-            La validación pasó. La creación real contra la API se conecta en
-            otra tarea.
+            Ya quedó guardado en tu colección.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button
