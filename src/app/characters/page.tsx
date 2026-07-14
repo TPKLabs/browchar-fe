@@ -1,18 +1,14 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { CharactersList } from "@/components/characters/charactersList";
-import { SAMPLE_CHARACTERS } from "@/mocks/sampleCharacters";
+import { CharactersListContainer } from "@/components/characters/charactersListContainer";
 
 /**
- * Pantalla de listado de personajes (DEV-56).
+ * Pantalla de listado de personajes (DEV-56/DEV-60).
  *
- * Estructura visual solamente: los personajes de acá abajo son de ejemplo
- * (`SAMPLE_CHARACTERS`, compartidos con la home para que ambas pantallas
- * muestren siempre los mismos personajes). La integración real con
- * `GET /characters` es DEV-60 — cuando esté lista, este stub se reemplaza
- * por un hook (`useCharacters`) que le pasa `characters`/`isPending`/
- * `isError` a `CharactersList` sin tocar el componente visual.
+ * La page es server-side y sólo arma el encabezado y el CTA; el listado real
+ * lo trae `CharactersListContainer` (client), que pega a `GET /characters` y
+ * delega el render a `CharactersList` (presentacional).
  */
 export default function CharactersPage() {
   return (
@@ -31,11 +27,7 @@ export default function CharactersPage() {
         </Button>
       </div>
 
-      <CharactersList
-        characters={SAMPLE_CHARACTERS}
-        isPending={false}
-        isError={false}
-      />
+      <CharactersListContainer />
     </div>
   );
 }

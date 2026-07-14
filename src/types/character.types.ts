@@ -32,8 +32,19 @@ export interface Character {
   playbookVersion: number;
 }
 
-/** Vista de Character expuesta por `GET /characters` y `GET /characters/:id`. */
+/** Vista de Character expuesta por `POST /characters` y `GET /characters/:id` (fila cruda). */
 export type CharacterView = Character;
+
+/**
+ * Item del listado `GET /characters`: espejo de `CharacterListItem` en
+ * browchar-api. Es el `Character` crudo enriquecido con los nombres resueltos
+ * de su Playbook y su Game (DEV-60), así el front arma las tarjetas sin cruzar
+ * `usePlaybooks` a mano. `campaignName` todavía no se resuelve en la API.
+ */
+export interface CharacterListItem extends Character {
+  playbookName: string;
+  gameName: string;
+}
 
 /**
  * Vista resumida de un Character para tarjetas de listado (home "Tus
