@@ -2,6 +2,14 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * @example
+ * <Card>
+ *   <CardHeader><CardTitle>Título</CardTitle></CardHeader>
+ *   <CardContent>Contenido</CardContent>
+ *   <CardFooter><Button>Acción</Button></CardFooter>
+ * </Card>
+ */
 function Card({
   className,
   size = "default",

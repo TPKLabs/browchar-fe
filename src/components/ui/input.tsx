@@ -3,6 +3,7 @@ import { Input as InputPrimitive } from "@base-ui/react/input";
 
 import { cn } from "@/lib/utils";
 
+/** @example <Input type="email" placeholder="tu@email.com" aria-invalid={!!error} /> */
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <InputPrimitive
