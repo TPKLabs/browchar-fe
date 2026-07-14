@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 import type { CharacterSummary } from "@/lib/types";
 import { CharacterCard } from "./character-card";
@@ -57,5 +57,41 @@ describe("CharacterCard", () => {
       "href",
       "/characters/char_1",
     );
+  });
+
+  it("linkea a editar el personaje", () => {
+    render(<CharacterCard character={CHARACTER} />);
+    expect(
+      screen.getByRole("button", { name: "Editar personaje" }),
+    ).toHaveAttribute("href", "/characters/char_1/edit");
+  });
+
+  describe("eliminar", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("pide confirmación y oculta la card si se confirma", () => {
+      vi.spyOn(window, "confirm").mockReturnValue(true);
+      render(<CharacterCard character={CHARACTER} />);
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Eliminar personaje" }),
+      );
+
+      expect(window.confirm).toHaveBeenCalledWith("¿Eliminar a Mad Dog?");
+      expect(screen.queryByText("Mad Dog")).not.toBeInTheDocument();
+    });
+
+    it("no oculta la card si se cancela la confirmación", () => {
+      vi.spyOn(window, "confirm").mockReturnValue(false);
+      render(<CharacterCard character={CHARACTER} />);
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Eliminar personaje" }),
+      );
+
+      expect(screen.getByText("Mad Dog")).toBeInTheDocument();
+    });
   });
 });
