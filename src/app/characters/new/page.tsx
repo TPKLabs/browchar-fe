@@ -1,4 +1,4 @@
-import { CharacterCreateFormContainer } from "@/components/characters/character-create-form-container";
+import { CharacterCreateFormContainer } from "@/components/characters/characterCreateFormContainer";
 
 /**
  * Ruta de creación de personaje (DEV-50).

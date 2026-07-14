@@ -11,7 +11,7 @@ import { cn } from "@/utils/cn";
  *     <EmptyDescription>No hay playbooks disponibles todavía.</EmptyDescription>
  *   </EmptyHeader>
  * </Empty>
- * — ver uso real en @/components/query-state.tsx (QueryEmpty)
+ * — ver uso real en @/components/queryState.tsx (QueryEmpty)
  */
 function Empty({ className, ...props }: React.ComponentProps<"div">) {
   return (

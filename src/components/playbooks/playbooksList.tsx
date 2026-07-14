@@ -1,8 +1,8 @@
 "use client";
 
-import { QueryEmpty, QueryError, QueryLoading } from "@/components/query-state";
-import { usePlaybooks } from "@/hooks/use-playbooks";
-import { PlaybookCard } from "./playbook-card";
+import { QueryEmpty, QueryError, QueryLoading } from "@/components/queryState";
+import { usePlaybooks } from "@/hooks/usePlaybooks";
+import { PlaybookCard } from "./playbookCard";
 
 interface PlaybooksListProps {
   /** Si viene, filtra los playbooks por juego (server-side, `?gameId=`). */

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 
-import { QueryEmpty, QueryError, QueryLoading } from "./query-state";
+import { QueryEmpty, QueryError, QueryLoading } from "./queryState";
 
 describe("QueryLoading", () => {
   it("expone role=status con el label recibido", () => {

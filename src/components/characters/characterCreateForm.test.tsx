@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { FieldType, type PlaybookView } from "@/types";
 import { ApiError } from "@/api/client";
-import { CharacterCreateForm } from "./character-create-form";
+import { CharacterCreateForm } from "./characterCreateForm";
 
 const SIMPLE: PlaybookView = {
   id: "simple",

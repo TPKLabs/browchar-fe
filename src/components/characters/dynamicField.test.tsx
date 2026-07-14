@@ -3,8 +3,8 @@ import { render, screen } from "@testing-library/react";
 import { useForm } from "react-hook-form";
 
 import { FieldType, type FieldDefinition } from "@/types";
-import { DynamicField } from "./dynamic-field";
-import type { CharacterFormValues } from "@/schemas/character-schema";
+import { DynamicField } from "./dynamicField";
+import type { CharacterFormValues } from "@/schemas/characterSchema";
 
 function Harness({ field, error }: { field: FieldDefinition; error?: string }) {
   const { control } = useForm<CharacterFormValues>({

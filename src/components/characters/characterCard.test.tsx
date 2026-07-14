@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import type { CharacterSummary } from "@/types";
-import { CharacterCard } from "./character-card";
+import { CharacterCard } from "./characterCard";
 
 const CHARACTER: CharacterSummary = {
   id: "char_1",

@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 
 import { FieldType, type Game, type PlaybookView } from "@/types";
-import { GamePlaybooks } from "./game-playbooks";
+import { GamePlaybooks } from "./gamePlaybooks";
 
 const GAMES: Game[] = [
   { id: "dnd5e", name: "D&D 5e" },

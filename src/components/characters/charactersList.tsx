@@ -1,6 +1,6 @@
-import { QueryEmpty, QueryError, QueryLoading } from "@/components/query-state";
+import { QueryEmpty, QueryError, QueryLoading } from "@/components/queryState";
 import type { CharacterSummary } from "@/types";
-import { CharacterCard } from "./character-card";
+import { CharacterCard } from "./characterCard";
 
 interface CharactersListProps {
   characters: CharacterSummary[];

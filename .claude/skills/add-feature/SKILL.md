@@ -44,7 +44,7 @@ not duplicated in the form.
 ## 4. TanStack Query hook
 
 Wrap the request in a `useMutation` (for create/update) or `useQuery` (for
-reads) hook, in `src/hooks/` (e.g. `src/hooks/use-create-character.ts`). Keep
+reads) hook, in `src/hooks/` (e.g. `src/hooks/useCreateCharacter.ts`). Keep
 query keys consistent (e.g. `["characters", characterId]`). Don't call
 `fetch` directly from components — funnel it through the hook so
 caching/invalidation stays centralized.

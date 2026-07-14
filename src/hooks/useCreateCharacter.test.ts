@@ -4,7 +4,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 
 import type { CreateCharacterInput } from "@/types";
-import { useCreateCharacter } from "./use-create-character";
+import { useCreateCharacter } from "./useCreateCharacter";
 
 function mockResponse(status: number, body?: unknown) {
   return {

@@ -1,4 +1,4 @@
-import { GamePlaybooks } from "@/components/games/game-playbooks";
+import { GamePlaybooks } from "@/components/games/gamePlaybooks";
 
 /**
  * Playbooks de un juego (`/games/:gameId`). Se llega desde el listado de juegos.

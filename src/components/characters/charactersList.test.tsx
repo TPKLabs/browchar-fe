@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import type { CharacterSummary } from "@/types";
-import { CharactersList } from "./characters-list";
+import { CharactersList } from "./charactersList";
 
 const CHARACTERS: CharacterSummary[] = [
   {

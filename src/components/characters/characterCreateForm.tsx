@@ -31,8 +31,8 @@ import {
   buildCharacterSchema,
   buildDefaultValues,
   type CharacterFormValues,
-} from "@/schemas/character-schema";
-import { DynamicField } from "./dynamic-field";
+} from "@/schemas/characterSchema";
+import { DynamicField } from "./dynamicField";
 
 /**
  * Sin auth todavía (DEV-5): el owner viaja hardcodeado en modo dev. Es el

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
-vi.mock("@/components/games/games-list", () => ({
+vi.mock("@/components/games/gamesList", () => ({
   GamesList: () => <div>lista de juegos</div>,
 }));
 

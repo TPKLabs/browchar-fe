@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 
 import { FieldType, type PlaybookView } from "@/types";
-import { PlaybooksList } from "./playbooks-list";
+import { PlaybooksList } from "./playbooksList";
 
 const PLAYBOOKS: PlaybookView[] = [
   {
