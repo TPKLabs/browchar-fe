@@ -5,6 +5,13 @@ import { RadioGroup as RadioGroupPrimitive } from "@base-ui/react/radio-group";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * @example
+ * <RadioGroup value={value} onValueChange={setValue}>
+ *   <RadioGroupItem value="a" />
+ *   <RadioGroupItem value="b" />
+ * </RadioGroup>
+ */
 function RadioGroup({ className, ...props }: RadioGroupPrimitive.Props) {
   return (
     <RadioGroupPrimitive

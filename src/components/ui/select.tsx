@@ -6,6 +6,15 @@ import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react";
 
+/**
+ * @example
+ * <Select value={value} onValueChange={setValue}>
+ *   <SelectTrigger><SelectValue placeholder="Elegí una opción" /></SelectTrigger>
+ *   <SelectContent>
+ *     <SelectItem value="a">Opción A</SelectItem>
+ *   </SelectContent>
+ * </Select>
+ */
 const Select = SelectPrimitive.Root;
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {

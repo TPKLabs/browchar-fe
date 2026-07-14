@@ -27,6 +27,7 @@ const badgeVariants = cva(
   },
 );
 
+/** @example <Badge variant="secondary">D&D 5e</Badge> */
 function Badge({
   className,
   variant = "default",

@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/** @example <Label htmlFor="name">Nombre</Label> */
 function Label({ className, ...props }: React.ComponentProps<"label">) {
   return (
     <label

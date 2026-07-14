@@ -40,6 +40,7 @@ const buttonVariants = cva(
   },
 );
 
+/** @example <Button variant="outline" render={<Link href="/games" />}>Ver juegos</Button> */
 function Button({
   className,
   variant = "default",
