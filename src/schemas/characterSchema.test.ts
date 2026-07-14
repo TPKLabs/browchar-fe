@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { FieldType, type PlaybookView } from "@/types";
-import { buildCharacterSchema, buildDefaultValues } from "./character-schema";
+import { buildCharacterSchema, buildDefaultValues } from "./characterSchema";
 
 function playbookWith(
   fields: PlaybookView["template"][number]["fields"],

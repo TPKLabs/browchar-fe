@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { SAMPLE_CHARACTERS } from "./sample-characters";
+import { SAMPLE_CHARACTERS } from "./sampleCharacters";
 
 describe("SAMPLE_CHARACTERS", () => {
   it("tiene más de tres personajes, para que la home pueda mostrar un subconjunto", () => {

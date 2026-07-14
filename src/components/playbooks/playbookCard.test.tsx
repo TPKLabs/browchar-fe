@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import { FieldType, type PlaybookView } from "@/types";
-import { PlaybookCard } from "./playbook-card";
+import { PlaybookCard } from "./playbookCard";
 
 const PLAYBOOK: PlaybookView = {
   id: "guerrero",

@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 
 import { FieldType, type PlaybookView } from "@/types";
-import { CharacterCreateFormContainer } from "./character-create-form-container";
+import { CharacterCreateFormContainer } from "./characterCreateFormContainer";
 
 const PLAYBOOKS: PlaybookView[] = [
   {

@@ -1,4 +1,4 @@
-import { PlaybooksList } from "@/components/playbooks/playbooks-list";
+import { PlaybooksList } from "@/components/playbooks/playbooksList";
 
 export default function PlaybooksPage() {
   return (

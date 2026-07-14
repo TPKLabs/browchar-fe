@@ -5,8 +5,8 @@ import { Dices } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { QueryEmpty, QueryError, QueryLoading } from "@/components/query-state";
-import { useGames } from "@/hooks/use-games";
+import { QueryEmpty, QueryError, QueryLoading } from "@/components/queryState";
+import { useGames } from "@/hooks/useGames";
 
 export function GamesList() {
   const { data: games, isPending, isError } = useGames();

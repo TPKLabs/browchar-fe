@@ -16,8 +16,8 @@ su propia carpeta top-level:
   resuelven `params`/`searchParams`/datos y delegan la UI. No existe `pages/`.
 - `src/components/<dominio>/` = **UI de dominio** reutilizable (primitivos shadcn
   en `src/components/ui/`).
-- `src/hooks/` = hooks de TanStack Query (`use-games.ts`, `use-playbooks.ts`,
-  `use-create-character.ts`), uno por endpoint/mutación, sin subcarpetas por
+- `src/hooks/` = hooks de TanStack Query (`useGames.ts`, `usePlaybooks.ts`,
+  `useCreateCharacter.ts`), uno por endpoint/mutación, sin subcarpetas por
   dominio.
 - `src/types/` = tipos de dominio, espejo de los modelos de browchar-api.
   Los tipos y la validación compartidos con la API (`FieldType`,
@@ -27,10 +27,10 @@ su propia carpeta top-level:
   directo del paquete.
 - `src/api/` = el cliente HTTP (`client.ts`).
 - `src/schemas/` = schemas Zod + lógica de validación/defaults específica de un
-  dominio (ej. `character-schema.ts`: schema y defaults del form de creación de
+  dominio (ej. `characterSchema.ts`: schema y defaults del form de creación de
   personaje). No es un hook ni un tipo ni un util genérico.
 - `src/mocks/` = datos de ejemplo compartidos entre pantallas (ej.
-  `sample-characters.ts`, usado tanto por la home como por `/characters`).
+  `sampleCharacters.ts`, usado tanto por la home como por `/characters`).
 - `src/utils/` = helpers genéricos, reusables entre dominios (`cn.ts`,
   `dates.ts`). Si algo es específico de un dominio, no es un util — va en
   `schemas/`, `hooks/` o el componente que lo usa.

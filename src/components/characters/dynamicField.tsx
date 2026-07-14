@@ -5,7 +5,7 @@ import { Controller, type Control } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radioGroup";
 import {
   Select,
   SelectContent,
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldType, type FieldDefinition } from "@/types";
-import type { CharacterFormValues } from "@/schemas/character-schema";
+import type { CharacterFormValues } from "@/schemas/characterSchema";
 
 interface DynamicFieldProps {
   field: FieldDefinition;

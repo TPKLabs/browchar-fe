@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 
-import { usePlaybooks } from "./use-playbooks";
+import { usePlaybooks } from "./usePlaybooks";
 
 function mockResponse(status: number, body?: unknown) {
   return {

@@ -1,4 +1,4 @@
-import { GamesList } from "@/components/games/games-list";
+import { GamesList } from "@/components/games/gamesList";
 
 export default function GamesPage() {
   return (

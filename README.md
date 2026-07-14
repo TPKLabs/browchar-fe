@@ -124,12 +124,12 @@ reutilizables ni lógica de dominio.
 - **`src/components/`** — **UI reutilizable**. Primitivos shadcn/ui en
   `src/components/ui/` (vendor); componentes de dominio agrupados por entidad en
   `src/components/<dominio>/` (ej. `src/components/characters/`).
-- **`src/hooks/`** — hooks de TanStack Query (`use-games.ts`,
-  `use-playbooks.ts`, `use-create-character.ts`), uno por endpoint/mutación.
+- **`src/hooks/`** — hooks de TanStack Query (`useGames.ts`,
+  `usePlaybooks.ts`, `useCreateCharacter.ts`), uno por endpoint/mutación.
 - **`src/types/`** — tipos de dominio, espejo del back.
 - **`src/api/`** — el cliente HTTP (`client.ts`).
 - **`src/schemas/`** — schemas Zod + validación/defaults específicos de un
-  dominio (ej. `character-schema.ts`).
+  dominio (ej. `characterSchema.ts`).
 - **`src/mocks/`** — datos de ejemplo compartidos entre pantallas.
 - **`src/utils/`** — helpers genéricos y reusables entre dominios (`cn.ts`,
   `dates.ts`).
@@ -146,11 +146,11 @@ Ejemplo — feature "crear personaje" (DEV-50):
 
 ```
 src/app/characters/new/page.tsx                    ← ruta (fina)
-src/components/characters/character-create-form.tsx ← UI de dominio
-src/components/characters/dynamic-field.tsx
-src/schemas/character-schema.ts                    ← validación Zod (no-UI)
-src/hooks/use-create-character.ts                   ← mutación TanStack Query
-src/mocks/sample-characters.ts
+src/components/characters/characterCreateForm.tsx ← UI de dominio
+src/components/characters/dynamicField.tsx
+src/schemas/characterSchema.ts                    ← validación Zod (no-UI)
+src/hooks/useCreateCharacter.ts                   ← mutación TanStack Query
+src/mocks/sampleCharacters.ts
 ```
 
 Cada archivo nuevo bajo `src/app`, `src/components`, `src/hooks`, `src/types`,
