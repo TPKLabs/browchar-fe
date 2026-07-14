@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cinzel, Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import { QueryProvider } from "@/components/providers/query-provider";
 import "./globals.css";
 
@@ -38,6 +39,7 @@ export default function RootLayout({
         <QueryProvider>
           <Navbar />
           <main className="flex flex-1 flex-col">{children}</main>
+          <Footer />
         </QueryProvider>
       </body>
     </html>
