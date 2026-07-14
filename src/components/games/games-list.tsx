@@ -1,44 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { Dices, Loader2 } from "lucide-react";
+import { Dices } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { QueryEmpty, QueryError, QueryLoading } from "@/components/query-state";
 import { useGames } from "@/lib/games/use-games";
 
 export function GamesList() {
   const { data: games, isPending, isError } = useGames();
 
   if (isPending) {
-    return (
-      <div
-        role="status"
-        className="text-muted-foreground flex items-center justify-center gap-2 rounded-lg border border-dashed p-10 text-sm"
-      >
-        <Loader2 className="size-4 animate-spin" aria-hidden />
-        Cargando juegos…
-      </div>
-    );
+    return <QueryLoading label="Cargando juegos…" />;
   }
 
   if (isError) {
     return (
-      <p
-        role="alert"
-        className="text-destructive bg-destructive/10 rounded-lg p-4 text-sm"
-      >
-        No se pudieron cargar los juegos. Intentá de nuevo más tarde.
-      </p>
+      <QueryError label="No se pudieron cargar los juegos. Intentá de nuevo más tarde." />
     );
   }
 
   if (games.length === 0) {
-    return (
-      <p className="text-muted-foreground rounded-lg border border-dashed p-10 text-center text-sm">
-        No hay juegos disponibles todavía.
-      </p>
-    );
+    return <QueryEmpty label="No hay juegos disponibles todavía." />;
   }
 
   return (

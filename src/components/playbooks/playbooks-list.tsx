@@ -1,7 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-
+import { QueryEmpty, QueryError, QueryLoading } from "@/components/query-state";
 import { usePlaybooks } from "@/lib/playbooks/use-playbooks";
 import { PlaybookCard } from "./playbook-card";
 
@@ -14,34 +13,17 @@ export function PlaybooksList({ gameId }: PlaybooksListProps = {}) {
   const { data: playbooks, isPending, isError } = usePlaybooks(gameId);
 
   if (isPending) {
-    return (
-      <div
-        role="status"
-        className="text-muted-foreground flex items-center justify-center gap-2 rounded-lg border border-dashed p-10 text-sm"
-      >
-        <Loader2 className="size-4 animate-spin" aria-hidden />
-        Cargando playbooks…
-      </div>
-    );
+    return <QueryLoading label="Cargando playbooks…" />;
   }
 
   if (isError) {
     return (
-      <p
-        role="alert"
-        className="text-destructive bg-destructive/10 rounded-lg p-4 text-sm"
-      >
-        No se pudieron cargar los playbooks. Intentá de nuevo más tarde.
-      </p>
+      <QueryError label="No se pudieron cargar los playbooks. Intentá de nuevo más tarde." />
     );
   }
 
   if (playbooks.length === 0) {
-    return (
-      <p className="text-muted-foreground rounded-lg border border-dashed p-10 text-center text-sm">
-        No hay playbooks disponibles todavía.
-      </p>
-    );
+    return <QueryEmpty label="No hay playbooks disponibles todavía." />;
   }
 
   return (
