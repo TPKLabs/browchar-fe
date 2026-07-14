@@ -53,4 +53,7 @@ export interface CharacterSummary {
   gameName: string;
   /** Ausente si el personaje no participa de ninguna Campaign. */
   campaignName?: string;
+  /** ISO 8601, igual que `Character.createdAt`/`updatedAt`. */
+  createdAt: string;
+  updatedAt: string;
 }

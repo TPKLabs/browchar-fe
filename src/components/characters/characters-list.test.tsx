@@ -11,12 +11,16 @@ const CHARACTERS: CharacterSummary[] = [
     playbookName: "Motorista",
     gameName: "Apocalypse World",
     campaignName: "Ruinas de Neo Tokio",
+    createdAt: "2026-04-01T09:30:00.000Z",
+    updatedAt: "2026-04-28T18:00:00.000Z",
   },
   {
     id: "char_2",
     name: "Silent Star",
     playbookName: "Ángel",
     gameName: "Apocalypse World",
+    createdAt: "2026-04-15T10:00:00.000Z",
+    updatedAt: "2026-04-15T10:00:00.000Z",
   },
 ];
 

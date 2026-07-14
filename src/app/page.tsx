@@ -4,35 +4,16 @@ import { ArrowRight, Dices, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CharacterCard } from "@/components/characters/character-card";
-import type { CharacterSummary } from "@/lib/types";
+import { SAMPLE_CHARACTERS } from "@/lib/mocks/sample-characters";
 
 /**
  * Placeholder hasta que exista el feature de Characters (hook + api module,
  * ver skill add-feature). El back todavía no expone "personajes recientes"
- * resuelto con nombre de playbook, game y campaign — misma vista y mismo
- * `CharacterCard` que usa `/characters` (DEV-56).
+ * resuelto con nombre de playbook, game y campaign. Usa los primeros N de
+ * `SAMPLE_CHARACTERS` (mismos datos que `/characters`, DEV-56) para que ambas
+ * pantallas nunca diverjan.
  */
-const RECENT_CHARACTERS: CharacterSummary[] = [
-  {
-    id: "1",
-    name: "Kaelith Duskbane",
-    playbookName: "Guerrero",
-    gameName: "D&D 5e",
-    campaignName: "La Caída de Baldur's Gate",
-  },
-  {
-    id: "2",
-    name: "Voss Ironhollow",
-    playbookName: "Clérigo",
-    gameName: "D&D 5e",
-  },
-  {
-    id: "3",
-    name: "Nyra Emberfall",
-    playbookName: "Piromante",
-    gameName: "Pathfinder",
-  },
-];
+const RECENT_CHARACTERS = SAMPLE_CHARACTERS.slice(0, 3);
 
 export default function Home() {
   return (

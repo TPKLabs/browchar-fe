@@ -10,6 +10,8 @@ const CHARACTER: CharacterSummary = {
   playbookName: "Motorista",
   gameName: "Apocalypse World",
   campaignName: "Ruinas de Neo Tokio",
+  createdAt: "2026-04-01T09:30:00.000Z",
+  updatedAt: "2026-04-28T18:00:00.000Z",
 };
 
 describe("CharacterCard", () => {
@@ -30,6 +32,23 @@ describe("CharacterCard", () => {
       <CharacterCard character={{ ...CHARACTER, campaignName: undefined }} />,
     );
     expect(screen.queryByText("Ruinas de Neo Tokio")).not.toBeInTheDocument();
+  });
+
+  it("ubica los chips de juego y campaña antes del nombre", () => {
+    const { container } = render(<CharacterCard character={CHARACTER} />);
+    const html = container.innerHTML;
+    expect(html.indexOf("Apocalypse World")).toBeLessThan(
+      html.indexOf("Mad Dog"),
+    );
+    expect(html.indexOf("Ruinas de Neo Tokio")).toBeLessThan(
+      html.indexOf("Mad Dog"),
+    );
+  });
+
+  it("muestra la fecha de creación y de última edición", () => {
+    render(<CharacterCard character={CHARACTER} />);
+    expect(screen.getByText(/Creado el/)).toHaveTextContent("2026");
+    expect(screen.getByText(/Última edición el/)).toHaveTextContent("2026");
   });
 
   it("linkea al detalle del personaje", () => {
