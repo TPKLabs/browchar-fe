@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+
+vi.mock("@/components/characters/recentCharacters", () => ({
+  RecentCharacters: () => <div>personajes recientes</div>,
+}));
+
 import Home from "./page";
 
 describe("Home", () => {
@@ -24,11 +29,9 @@ describe("Home", () => {
     );
   });
 
-  it("renders the recent characters", () => {
+  it("delegates the recent characters to RecentCharacters", () => {
     render(<Home />);
-    expect(screen.getByText("Kaelith Duskbane")).toBeInTheDocument();
-    expect(screen.getByText("Voss Ironhollow")).toBeInTheDocument();
-    expect(screen.getByText("Nyra Emberfall")).toBeInTheDocument();
+    expect(screen.getByText("personajes recientes")).toBeInTheDocument();
   });
 
   it("links to the full characters list", () => {

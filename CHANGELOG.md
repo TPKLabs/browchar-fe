@@ -66,6 +66,7 @@ a known issue or a future consideration in a commit message.
 
 ### Future Considerations
 
+- CharacterListItem is mirrored by hand from browchar-api; if the API response shape changes the front drifts silently. Tracked in DEV-197 (move response types into @tpklabs/browchar-contracts as the single source of truth).
 - `buildTemplateSchema` (shared `@tpklabs/browchar-contracts`) validates required text with `min(1)` but no `.trim()`, so a whitespace-only value (`"   "`) satisfies a required text field. Inherited from the backend's original template validation and adopted as-is when unifying in DEV-153; tightening it (trim in the shared builder) is a change to the published package + API — candidate for a `0.2.0`.
 - FE response types (`Character` / `CharacterView`, pagination envelope) are still hand-written in `src/lib/types` — `@tpklabs/browchar-contracts` only owns request/template contracts so far. If the API's Prisma-derived response shapes change, these can drift until the package exposes them too.
 - `CHECKBOX` fields with `options` are modelled as a multi-select by the shared `buildTemplateSchema` (it accepts one/several of the option values), but the FE renders every checkbox as a single boolean and `buildDefaultValues` seeds it to `false`. A template defining a `CHECKBOX` **with** `options` would therefore fail validation on submit with no way to fix it from the current UI. No current template uses this shape; if one is added, render a multi-select and default it to `[]`/`""` (surfaced reviewing DEV-153).
