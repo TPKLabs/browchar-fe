@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { apiClient } from "@/api/client";
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from "@/types";
@@ -33,5 +33,8 @@ export function useCharacters(params: UseCharactersParams = {}) {
       apiClient.get<Paginated<CharacterListItem>>(
         `/characters?page=${page}&pageSize=${pageSize}`,
       ),
+    // Al cambiar de página mantené los datos previos visibles mientras llega la
+    // nueva, así la lista y los controles de paginación no parpadean a "cargando".
+    placeholderData: keepPreviousData,
   });
 }

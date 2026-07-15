@@ -60,18 +60,13 @@ describe("RecentCharacters", () => {
     );
   });
 
-  it("recorta a 3 personajes aunque la API devuelva más", async () => {
+  it("renderiza los personajes que devuelve la API (ya vienen capados a pageSize)", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
         mockResponse(200, {
-          data: [
-            item("c1", "Doc"),
-            item("c2", "Rust"),
-            item("c3", "Vale"),
-            item("c4", "Bruenor"),
-          ],
-          meta: { page: 1, pageSize: 3, total: 4 },
+          data: [item("c1", "Doc"), item("c2", "Rust"), item("c3", "Vale")],
+          meta: { page: 1, pageSize: 3, total: 9 },
         }),
       ),
     );
@@ -81,20 +76,17 @@ describe("RecentCharacters", () => {
     expect(await screen.findByText("Doc")).toBeInTheDocument();
     expect(screen.getByText("Rust")).toBeInTheDocument();
     expect(screen.getByText("Vale")).toBeInTheDocument();
-    expect(screen.queryByText("Bruenor")).not.toBeInTheDocument();
   });
 
   it("muestra el estado vacío propio de la home", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          mockResponse(200, {
-            data: [],
-            meta: { page: 1, pageSize: 3, total: 0 },
-          }),
-        ),
+      vi.fn().mockResolvedValue(
+        mockResponse(200, {
+          data: [],
+          meta: { page: 1, pageSize: 3, total: 0 },
+        }),
+      ),
     );
 
     renderWithClient(<RecentCharacters />);

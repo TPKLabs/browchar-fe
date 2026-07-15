@@ -11,9 +11,10 @@ const RECENT_LIMIT = 3;
 
 /**
  * "Tus personajes recientes" de la home: trae los personajes reales desde
- * `GET /characters` (DEV-60, ordenados por creación desc en la API) y muestra
- * los primeros {@link RECENT_LIMIT}. Comparte la fuente con `/characters`, así
- * ambas pantallas nunca divergen.
+ * `GET /characters` (DEV-60, ordenados por `updatedAt` desc en la API — los
+ * últimos en uso primero) y muestra los primeros {@link RECENT_LIMIT}, que ya
+ * es el `pageSize` que se pide. Comparte la fuente con `/characters`, así ambas
+ * pantallas nunca divergen.
  *
  * Sólo renderiza el bloque de datos (grilla / carga / error / vacío); el
  * encabezado y el "Ver todos" viven en la page para mantenerla server-side.
@@ -33,7 +34,7 @@ export function RecentCharacters() {
     );
   }
 
-  const characters = data.data.slice(0, RECENT_LIMIT).map(toCharacterSummary);
+  const characters = (data?.data ?? []).map(toCharacterSummary);
 
   if (characters.length === 0) {
     return (
