@@ -182,6 +182,43 @@ describe("CharacterDetail", () => {
     expect(screen.getByLabelText("Apodo")).toHaveValue("Nuevo apodo");
   });
 
+  it("deshabilita el formulario mientras el guardado estÃ¡ pendiente", async () => {
+    useRouter.mockReturnValue({ push });
+    let resolveSave!: () => void;
+    const onSave = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+
+    render(
+      <CharacterDetail
+        character={character}
+        playbook={playbook}
+        onSave={onSave}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Apodo"), {
+      target: { value: "Nuevo apodo" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+    expect(screen.getByLabelText(/Nombre/)).toBeDisabled();
+    expect(screen.getByLabelText("Apodo")).toBeDisabled();
+    expect(
+      screen.getByRole("checkbox", { name: /Tiene reputaci/ }),
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("combobox", { name: "Look" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancelar" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Eliminar/ })).toBeDisabled();
+
+    resolveSave();
+    await waitFor(() => expect(screen.getByLabelText("Apodo")).toBeEnabled());
+  });
+
   it('muestra un mensaje de "no existe" cuando onSave rechaza con un 404', async () => {
     useRouter.mockReturnValue({ push });
     const onSave = vi

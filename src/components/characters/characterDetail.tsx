@@ -256,6 +256,7 @@ export function CharacterDetail({
               variant="destructive"
               size="sm"
               onClick={handleDelete}
+              disabled={isSubmitting}
             >
               <Trash2 data-icon="inline-start" />
               Eliminar
@@ -308,6 +309,7 @@ export function CharacterDetail({
               <Input
                 id="character-name"
                 {...register("name")}
+                disabled={isSubmitting}
                 aria-invalid={Boolean(errors.name)}
                 aria-describedby={
                   errors.name ? "character-name-error" : undefined
@@ -353,6 +355,7 @@ export function CharacterDetail({
                       key={field.id}
                       field={field}
                       control={control}
+                      disabled={isSubmitting}
                       error={fieldError(field.id)}
                     />
                   ))}

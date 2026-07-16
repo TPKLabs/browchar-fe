@@ -20,6 +20,8 @@ import type { CharacterFormValues } from "@/schemas/characterSchema";
 interface DynamicFieldProps {
   field: FieldDefinition;
   control: Control<CharacterFormValues>;
+  /** Deshabilita el control mientras el formulario tiene una request pendiente. */
+  disabled?: boolean;
   /** Mensaje de error de validación para este campo, si hay. */
   error?: string;
 }
@@ -38,7 +40,12 @@ function RequiredMark({ required }: { required?: boolean }) {
  * cableado a react-hook-form vía `Controller`. El nombre en el form es
  * `values.<field.id>` para agrupar todos los campos dinámicos bajo `values`.
  */
-export function DynamicField({ field, control, error }: DynamicFieldProps) {
+export function DynamicField({
+  field,
+  control,
+  disabled = false,
+  error,
+}: DynamicFieldProps) {
   const name = `values.${field.id}` as const;
   const controlId = `field-${field.id}`;
   const describedBy =
@@ -101,7 +108,7 @@ export function DynamicField({ field, control, error }: DynamicFieldProps) {
                   checked={Boolean(rhf.value)}
                   onCheckedChange={(checked) => rhf.onChange(checked)}
                   onBlur={rhf.onBlur}
-                  disabled={field.disabled}
+                  disabled={disabled || field.disabled}
                   aria-invalid={invalid}
                   aria-describedby={describedBy}
                 />
@@ -126,7 +133,7 @@ export function DynamicField({ field, control, error }: DynamicFieldProps) {
                 value={String(rhf.value ?? "")}
                 onChange={rhf.onChange}
                 onBlur={rhf.onBlur}
-                disabled={field.disabled}
+                disabled={disabled || field.disabled}
                 aria-invalid={invalid}
                 aria-describedby={describedBy}
               />
@@ -145,7 +152,7 @@ export function DynamicField({ field, control, error }: DynamicFieldProps) {
                 value={String(rhf.value ?? "")}
                 onChange={rhf.onChange}
                 onBlur={rhf.onBlur}
-                disabled={field.disabled}
+                disabled={disabled || field.disabled}
                 aria-invalid={invalid}
                 aria-describedby={describedBy}
               />
@@ -162,7 +169,7 @@ export function DynamicField({ field, control, error }: DynamicFieldProps) {
                 <SelectTrigger
                   id={controlId}
                   className="w-full"
-                  disabled={field.disabled}
+                  disabled={disabled || field.disabled}
                   aria-invalid={invalid}
                   aria-describedby={describedBy}
                 >
@@ -204,7 +211,7 @@ export function DynamicField({ field, control, error }: DynamicFieldProps) {
                     <RadioGroupItem
                       id={`${controlId}-${option.value}`}
                       value={option.value}
-                      disabled={field.disabled}
+                      disabled={disabled || field.disabled}
                     />
                     {option.label}
                   </Label>
@@ -222,7 +229,7 @@ export function DynamicField({ field, control, error }: DynamicFieldProps) {
                 value={String(rhf.value ?? "")}
                 onChange={rhf.onChange}
                 onBlur={rhf.onBlur}
-                disabled={field.disabled}
+                disabled={disabled || field.disabled}
                 aria-invalid={invalid}
                 aria-describedby={describedBy}
               />
