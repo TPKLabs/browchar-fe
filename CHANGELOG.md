@@ -57,6 +57,7 @@ a known issue or a future consideration in a commit message.
 
 ### Known Issues
 
+- CharacterDetail's Cancelar button (src/components/characters/characterDetail.tsx) reverts to the character's original pre-session values instead of the last successfully saved edit, because handleCancel resets to a memoized defaultValues pinned to the initial props rather than react-hook-form's own updated baseline. Repro: edit a field, Guardar cambios, edit again, Cancelar — the first save is silently discarded. Fix: use reset() with no arguments (reverts to react-hook-form's internally tracked defaults, which handleValid's reset(data) already keeps in sync) instead of reset(defaultValues).
 - `apiClient`'s `request` doesn't catch network-level failures (e.g. `fetch`
   rejecting with a `TypeError` when offline or on a DNS/CORS failure) — only
   non-2xx HTTP responses are wrapped in `ApiError`. Callers doing
@@ -66,6 +67,7 @@ a known issue or a future consideration in a commit message.
 
 ### Future Considerations
 
+- "Guardar cambios" gates on formState.isDirty; auto-save (fire every 7s while isDirty, per a requirement noted on DEV-65) should hook into that same signal once PATCH /characters/:id exists.
 - CharacterListItem is mirrored by hand from browchar-api; if the API response shape changes the front drifts silently. Tracked in DEV-197 (move response types into @tpklabs/browchar-contracts as the single source of truth).
 - `buildTemplateSchema` (shared `@tpklabs/browchar-contracts`) validates required text with `min(1)` but no `.trim()`, so a whitespace-only value (`"   "`) satisfies a required text field. Inherited from the backend's original template validation and adopted as-is when unifying in DEV-153; tightening it (trim in the shared builder) is a change to the published package + API — candidate for a `0.2.0`.
 - FE response types (`Character` / `CharacterView`, pagination envelope) are still hand-written in `src/lib/types` — `@tpklabs/browchar-contracts` only owns request/template contracts so far. If the API's Prisma-derived response shapes change, these can drift until the package exposes them too.

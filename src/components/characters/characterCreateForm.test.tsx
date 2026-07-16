@@ -208,4 +208,65 @@ describe("CharacterCreateForm", () => {
       await screen.findByText(/Personaje «Aria» creado\./),
     ).toBeInTheDocument();
   });
+
+  it('muestra "Ver personaje" al detalle cuando onSubmit resuelve con el Character creado (DEV-55)', async () => {
+    const onSubmit = vi.fn().mockResolvedValue({ id: "char-1", name: "Aria" });
+    render(
+      <CharacterCreateForm
+        playbooks={PLAYBOOKS}
+        initialPlaybookId="simple"
+        onSubmit={onSubmit}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText(/Nombre/), {
+      target: { value: "Aria" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Crear personaje" }));
+
+    expect(
+      await screen.findByRole("button", { name: "Ver personaje" }),
+    ).toHaveAttribute("href", "/characters/char-1");
+  });
+
+  it('no muestra "Ver personaje" cuando onSubmit no devuelve el Character (stub)', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(
+      <CharacterCreateForm
+        playbooks={PLAYBOOKS}
+        initialPlaybookId="simple"
+        onSubmit={onSubmit}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText(/Nombre/), {
+      target: { value: "Aria" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Crear personaje" }));
+
+    await screen.findByText(/Personaje «Aria» creado\./);
+    expect(
+      screen.queryByRole("button", { name: "Ver personaje" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('"Crear otro" limpia el link "Ver personaje" del intento anterior', async () => {
+    const onSubmit = vi.fn().mockResolvedValue({ id: "char-1", name: "Aria" });
+    render(
+      <CharacterCreateForm
+        playbooks={PLAYBOOKS}
+        initialPlaybookId="simple"
+        onSubmit={onSubmit}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText(/Nombre/), {
+      target: { value: "Aria" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Crear personaje" }));
+    await screen.findByRole("button", { name: "Ver personaje" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Crear otro" }));
+
+    expect(
+      screen.queryByRole("button", { name: "Ver personaje" }),
+    ).not.toBeInTheDocument();
+  });
 });

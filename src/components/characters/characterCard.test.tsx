@@ -72,13 +72,6 @@ describe("CharacterCard", () => {
     );
   });
 
-  it("linkea a editar el personaje", () => {
-    render(<CharacterCard character={CHARACTER} />);
-    expect(
-      screen.getByRole("button", { name: "Editar personaje" }),
-    ).toHaveAttribute("href", "/characters/char_1/edit");
-  });
-
   describe("eliminar", () => {
     afterEach(() => {
       vi.restoreAllMocks();

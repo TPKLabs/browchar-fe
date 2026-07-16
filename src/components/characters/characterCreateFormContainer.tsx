@@ -49,11 +49,9 @@ export function CharacterCreateFormContainer({
       playbooks={playbooks}
       initialPlaybookId={initialPlaybookId}
       // `mutateAsync` rechaza con `ApiError` en fallo; el form lo captura y
-      // muestra su estado de error. Devolvemos `void` porque el form no usa
-      // el personaje creado (el listado/detalle son otras subtasks).
-      onSubmit={(input) =>
-        createCharacter.mutateAsync(input).then(() => undefined)
-      }
+      // muestra su estado de error. Resuelve con el Character creado (DEV-55):
+      // el form usa su `id` para el link "Ver personaje" al detalle (DEV-51).
+      onSubmit={(input) => createCharacter.mutateAsync(input)}
     />
   );
 }

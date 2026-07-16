@@ -24,7 +24,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { CreateCharacterInput, PlaybookView } from "@/types";
+import type {
+  CharacterView,
+  CreateCharacterInput,
+  PlaybookView,
+} from "@/types";
 import { ApiError } from "@/api/client";
 
 import {
@@ -45,10 +49,11 @@ interface CharacterCreateFormProps {
   playbooks: PlaybookView[];
   initialPlaybookId?: string;
   /**
-   * Seam para la integración real con la API (otra subtask). Por defecto es un
-   * stub local que simula latencia y resuelve OK, sin pegarle al back.
+   * Seam para la integración real con la API. Resuelve con el Character
+   * creado (DEV-55/DEV-51: se usa su `id` para el link "Ver personaje" del
+   * panel de éxito) — `void` en el stub por defecto, que no crea nada real.
    */
-  onSubmit?: (input: CreateCharacterInput) => Promise<void>;
+  onSubmit?: (input: CreateCharacterInput) => Promise<CharacterView | void>;
 }
 
 async function stubSubmit(): Promise<void> {
@@ -70,6 +75,9 @@ export function CharacterCreateForm({
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [createdName, setCreatedName] = useState<string | null>(null);
+  const [createdCharacterId, setCreatedCharacterId] = useState<string | null>(
+    null,
+  );
 
   // Juegos únicos disponibles (derivados de los playbooks).
   const games = useMemo(() => {
@@ -121,6 +129,7 @@ export function CharacterCreateForm({
     reset(buildDefaultValues(undefined));
     setSubmitError(null);
     setCreatedName(null);
+    setCreatedCharacterId(null);
   };
 
   // Al cambiar de playbook, el schema y los campos cambian: reseteamos el form
@@ -131,6 +140,7 @@ export function CharacterCreateForm({
     reset(buildDefaultValues(playbooks.find((p) => p.id === id)));
     setSubmitError(null);
     setCreatedName(null);
+    setCreatedCharacterId(null);
   };
 
   const valuesErrors = errors.values as
@@ -147,8 +157,9 @@ export function CharacterCreateForm({
       values: data.values,
     };
     try {
-      await onSubmit(input);
+      const created = await onSubmit(input);
       setCreatedName(input.name);
+      setCreatedCharacterId(created?.id ?? null);
     } catch (error) {
       // 400 de validación del back: además del mensaje general, mapeamos cada
       // `{ field, message }` al campo del form para que el error se muestre al
@@ -254,11 +265,20 @@ export function CharacterCreateForm({
             Ya quedó guardado en tu colección.
           </p>
           <div className="flex flex-wrap gap-2">
+            {createdCharacterId ? (
+              <Button
+                nativeButton={false}
+                render={<Link href={`/characters/${createdCharacterId}`} />}
+              >
+                Ver personaje
+              </Button>
+            ) : null}
             <Button
               variant="outline"
               onClick={() => {
                 reset(buildDefaultValues(selectedPlaybook));
                 setCreatedName(null);
+                setCreatedCharacterId(null);
               }}
             >
               Crear otro

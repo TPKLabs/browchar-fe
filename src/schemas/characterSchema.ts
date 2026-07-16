@@ -6,7 +6,7 @@ import {
   type FieldDefinition,
 } from "@tpklabs/browchar-contracts";
 
-import type { PlaybookView } from "@/types";
+import type { CharacterView, PlaybookView } from "@/types";
 
 /**
  * Schema y defaults del form de creación de personaje (DEV-50).
@@ -80,4 +80,31 @@ export function buildDefaultValues(
     values[field.id] = defaultFieldValue(field);
   }
   return { name: "", values };
+}
+
+/**
+ * Valores iniciales del form para editar un Character existente (DEV-51): a
+ * diferencia de `buildDefaultValues` (defaults del template para un personaje
+ * nuevo), parte de los `values` ya guardados. Un campo del template ausente en
+ * `character.values` (playbook actualizado después de crear el personaje, ver
+ * `playbookVersion`) cae al default del template, igual que un personaje nuevo.
+ *
+ * Los numéricos se normalizan a `string`, igual que `defaultFieldValue`: el
+ * input controlado siempre trabaja en string y `buildTemplateSchema` con
+ * `coerceNumbers: true` los vuelve a convertir en el submit.
+ */
+export function buildValuesFromCharacter(
+  playbook: PlaybookView | undefined,
+  character: Pick<CharacterView, "name" | "values">,
+): CharacterFormValues {
+  const values: Record<string, unknown> = {};
+  for (const field of templateFields(playbook)) {
+    const raw = character.values[field.id];
+    if (raw === undefined) {
+      values[field.id] = defaultFieldValue(field);
+      continue;
+    }
+    values[field.id] = NUMBER_TYPES.has(field.type) ? String(raw) : raw;
+  }
+  return { name: character.name, values };
 }

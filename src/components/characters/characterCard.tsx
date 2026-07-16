@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Pencil, Swords, Trash2 } from "lucide-react";
+import { Swords, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,9 +24,9 @@ import { formatDate, formatRelativeDate } from "@/utils/dates";
  * fecha de creación (absoluta) y de última edición (relativa a ahora, con la
  * fecha absoluta en el `title` para quien la necesite exacta).
  *
- * "Editar" linkea a `/characters/:id/edit`, que todavía no existe — se arma
- * junto con la pantalla de detalle. Mismo criterio que "Ver detalle": el
- * botón queda in place aunque su destino todavía no esté armado.
+ * No hay botón de editar separado: la edición vive inline en la pantalla de
+ * detalle (DEV-51, `CharacterDetail`), detrás de su propio botón "Editar" —
+ * no hay una ruta `/characters/:id/edit` distinta.
  *
  * "Eliminar" no pega a ningún backend (no hay `DELETE /characters/:id`
  * todavía): tras confirmar, oculta la card localmente para dejar el
@@ -74,15 +74,6 @@ export function CharacterCard({ character }: { character: CharacterSummary }) {
           render={<Link href={`/characters/${character.id}`} />}
         >
           Ver detalle
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          aria-label="Editar personaje"
-          nativeButton={false}
-          render={<Link href={`/characters/${character.id}/edit`} />}
-        >
-          <Pencil aria-hidden />
         </Button>
         <Button
           variant="destructive"

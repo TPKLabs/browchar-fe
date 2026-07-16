@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { FieldType, type PlaybookView } from "@/types";
-import { buildCharacterSchema, buildDefaultValues } from "./characterSchema";
+import { FieldType, type CharacterView, type PlaybookView } from "@/types";
+import {
+  buildCharacterSchema,
+  buildDefaultValues,
+  buildValuesFromCharacter,
+} from "./characterSchema";
 
 function playbookWith(
   fields: PlaybookView["template"][number]["fields"],
@@ -215,6 +219,62 @@ describe("buildDefaultValues", () => {
     expect(defaults).toEqual({
       name: "",
       values: { concepto: "", fuerza: "10", insp: false, rol: "tanque" },
+    });
+  });
+});
+
+describe("buildValuesFromCharacter", () => {
+  function characterWith(
+    values: CharacterView["values"],
+    name = "Marlene",
+  ): Pick<CharacterView, "name" | "values"> {
+    return { name, values };
+  }
+
+  it("parte de los values guardados, normalizando numéricos a string", () => {
+    const values = buildValuesFromCharacter(
+      playbookWith([
+        { id: "concepto", label: "Concepto", type: FieldType.TEXT },
+        { id: "fuerza", label: "Fuerza", type: FieldType.TEXTNUMBER },
+        { id: "insp", label: "Inspirado", type: FieldType.CHECKBOX },
+      ]),
+      characterWith({ concepto: "Heroína", fuerza: 12, insp: true }),
+    );
+
+    expect(values).toEqual({
+      name: "Marlene",
+      values: { concepto: "Heroína", fuerza: "12", insp: true },
+    });
+  });
+
+  it("cae al default del template para un field ausente en los values guardados", () => {
+    // Playbook actualizado después de crear el personaje (drift de versión):
+    // el campo nuevo no está en `character.values`.
+    const values = buildValuesFromCharacter(
+      playbookWith([
+        { id: "concepto", label: "Concepto", type: FieldType.TEXT },
+        {
+          id: "nuevoCampo",
+          label: "Nuevo",
+          type: FieldType.TEXTNUMBER,
+          defaultValue: 5,
+        },
+      ]),
+      characterWith({ concepto: "Heroína" }),
+    );
+
+    expect(values).toEqual({
+      name: "Marlene",
+      values: { concepto: "Heroína", nuevoCampo: "5" },
+    });
+  });
+
+  it("sin playbook, no arma ningún value dinámico", () => {
+    expect(
+      buildValuesFromCharacter(undefined, characterWith({ x: 1 })),
+    ).toEqual({
+      name: "Marlene",
+      values: {},
     });
   });
 });

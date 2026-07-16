@@ -113,6 +113,11 @@ describe("CharacterCreateFormContainer", () => {
     expect(
       await screen.findByText(/Personaje «Aria» creado\./),
     ).toBeInTheDocument();
+    // DEV-55: el `id` que devuelve POST /characters llega hasta el link "Ver
+    // personaje" del detalle (DEV-51) — no se descarta en el container.
+    expect(
+      screen.getByRole("button", { name: "Ver personaje" }),
+    ).toHaveAttribute("href", "/characters/char-1");
 
     const postCall = fetchMock.mock.calls.find((c) =>
       String(c[0]).startsWith("/characters"),
