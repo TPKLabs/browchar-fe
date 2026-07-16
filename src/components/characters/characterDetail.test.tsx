@@ -75,12 +75,22 @@ describe("CharacterDetail", () => {
     ).toBeChecked();
   });
 
-  it("muestra el nombre del playbook y del juego", () => {
+  it("muestra el nombre del juego como chip", () => {
     useRouter.mockReturnValue({ push });
     render(<CharacterDetail character={character} playbook={playbook} />);
 
     expect(screen.getByText("Apocalypse World")).toBeInTheDocument();
-    expect(screen.getByText("Angel")).toBeInTheDocument();
+  });
+
+  it("muestra el playbook como dropdown, no como chip", () => {
+    useRouter.mockReturnValue({ push });
+    render(<CharacterDetail character={character} playbook={playbook} />);
+
+    const playbookSelect = screen.getByRole("combobox", { name: "Playbook" });
+    expect(playbookSelect).toHaveTextContent("Angel");
+    // Reasignar playbook implica reconstruir template/values — todavía no
+    // resuelto (ver PR #28), así que por ahora es solo de lectura.
+    expect(playbookSelect).toBeDisabled();
   });
 
   it("tiene un link para volver al listado", () => {

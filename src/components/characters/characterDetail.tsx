@@ -12,6 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { CharacterView, PlaybookView } from "@/types";
 import { formatDate, formatRelativeDate } from "@/utils/dates";
 import {
@@ -158,7 +165,22 @@ export function CharacterDetail({
           <CardHeader>
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">{playbook.game.gameName}</Badge>
-              <Badge variant="outline">{playbook.name}</Badge>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="playbook-select">Playbook</Label>
+              {/* Solo lectura por ahora: reasignar el playbook implica
+                  reconstruir template/values (como en CharacterCreateForm) y
+                  todavía no está resuelto — ver PR #28. Es un <Select>, no un
+                  chip, para que combine visualmente con el resto del form,
+                  siempre editable. */}
+              <Select value={playbook.id} disabled>
+                <SelectTrigger id="playbook-select" className="w-full" disabled>
+                  <SelectValue>{() => playbook.name}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={playbook.id}>{playbook.name}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="character-name">
