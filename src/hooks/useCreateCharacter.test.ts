@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 
-import type { CreateCharacterInput } from "@/types";
+import type { CharacterCreateRequestBody } from "@/types";
 import { useCreateCharacter } from "./useCreateCharacter";
 
 function mockResponse(status: number, body?: unknown) {
@@ -27,7 +27,7 @@ function createWrapper() {
   };
 }
 
-const INPUT: CreateCharacterInput = {
+const INPUT: CharacterCreateRequestBody = {
   name: "Aria",
   playbookId: "pb-1",
   ownerId: "dev-owner",

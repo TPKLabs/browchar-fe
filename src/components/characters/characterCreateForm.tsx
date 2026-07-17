@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import type {
   CharacterView,
-  CreateCharacterInput,
+  CharacterCreateRequestBody,
   PlaybookView,
 } from "@/types";
 import { ApiError } from "@/api/client";
@@ -53,7 +53,9 @@ interface CharacterCreateFormProps {
    * creado (DEV-55/DEV-51: se usa su `id` para el link "Ver personaje" del
    * panel de éxito) — `void` en el stub por defecto, que no crea nada real.
    */
-  onSubmit?: (input: CreateCharacterInput) => Promise<CharacterView | void>;
+  onSubmit?: (
+    input: CharacterCreateRequestBody,
+  ) => Promise<CharacterView | void>;
 }
 
 async function stubSubmit(): Promise<void> {
@@ -150,7 +152,7 @@ export function CharacterCreateForm({
   const handleValid = async (data: CharacterFormValues) => {
     if (!selectedPlaybook) return;
     setSubmitError(null);
-    const input: CreateCharacterInput = {
+    const input: CharacterCreateRequestBody = {
       name: data.name,
       playbookId: selectedPlaybook.id,
       ownerId: DEV_OWNER_ID,

@@ -1,7 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { apiClient } from "@/api/client";
-import type { CharacterView, CreateCharacterInput } from "@/types";
+import type {
+  CharacterCreateRequestBody,
+  CharacterCreateResponse,
+} from "@tpklabs/browchar-contracts";
 
 /**
  * Crea un personaje contra `POST /characters` (DEV-47/DEV-48).
@@ -12,7 +15,7 @@ import type { CharacterView, CreateCharacterInput } from "@/types";
  */
 export function useCreateCharacter() {
   return useMutation({
-    mutationFn: (input: CreateCharacterInput) =>
-      apiClient.post<CharacterView>("/characters", input),
+    mutationFn: (input: CharacterCreateRequestBody) =>
+      apiClient.post<CharacterCreateResponse>("/characters", input),
   });
 }
