@@ -37,12 +37,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Aviso de drift contra GitHub Packages. Warning-only a propósito: un
-      # publish nuevo de contracts no debe poner en rojo PRs del FE cuyo diff
-      # no tiene nada que ver (mismo criterio por el que no hay npm audit
-      # como gate). El chequeo bloqueante equivalente vive en el publish de
-      # browchar-api (publish-contracts.yml).
-      - name: Check contracts version freshness (warning only)
+      # Gate de drift contra GitHub Packages (decisión 2026-07-16: fail duro —
+      # un warning verde no se ve y se termina mergeando atrasado). Trade-off
+      # asumido: un publish nuevo de contracts pone en rojo los PRs del FE
+      # hasta que entre el bump del pin. Si el registry no responde, avisa y
+      # sigue (no bloquear por un hiccup externo).
+      - name: Check contracts package is up to date
         run: |
           LATEST=$(npm view @tpklabs/browchar-contracts version 2>/dev/null) || {
             echo "::warning::No se pudo consultar la última versión de @tpklabs/browchar-contracts en GitHub Packages — chequeo de frescura salteado."
@@ -53,9 +53,11 @@ jobs:
           if [ "$INSTALLED" = "$LATEST" ]; then
             echo "@tpklabs/browchar-contracts $INSTALLED instalado = última publicada."
           elif npx --yes semver --range "$PIN" "$LATEST" > /dev/null; then
-            echo "::warning::@tpklabs/browchar-contracts instalado en $INSTALLED pero la última publicada es $LATEST y el pin $PIN la admite — falta un npm update @tpklabs/browchar-contracts (+ lockfile)."
+            echo "::error::@tpklabs/browchar-contracts instalado en $INSTALLED pero la última publicada es $LATEST y el pin $PIN la admite — corré npm update @tpklabs/browchar-contracts y commiteá el lockfile."
+            exit 1
           else
-            echo "::warning::Drift duro de @tpklabs/browchar-contracts: el pin $PIN NO admite la última publicada $LATEST (instalado: $INSTALLED). Bumpear el pin en package.json y regenerar el lockfile."
+            echo "::error::Drift duro de @tpklabs/browchar-contracts: el pin $PIN NO admite la última publicada $LATEST (instalado: $INSTALLED). Bumpeá el pin en package.json y regenerá el lockfile."
+            exit 1
           fi
 
       - name: Format check
