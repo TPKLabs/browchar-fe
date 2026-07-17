@@ -1,14 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { UpdateCharacterInput as UpdateCharacterContract } from "@tpklabs/browchar-contracts";
 
 import { apiClient } from "@/api/client";
 import type { CharacterView } from "@/types";
 import { characterQueryKey } from "./useCharacter";
 
-/** Payload de `PATCH /characters/:id` (DEV-68). */
-export interface UpdateCharacterInput {
-  name: string;
-  values: Record<string, unknown>;
-}
+/**
+ * Payload de `PATCH /characters/:id` (DEV-68), derivado del contrato
+ * compartido (DEV-202): el schema admite update parcial (campos opcionales),
+ * pero este front siempre manda el objeto completo porque el back reemplaza
+ * `values` wholesale (DEV-67) — de ahí el `Required`. Si el contrato renombra
+ * o quita un campo, esto deja de compilar en vez de romper en runtime.
+ */
+export type UpdateCharacterInput = Required<UpdateCharacterContract>;
 
 /**
  * Actualiza un personaje contra `PATCH /characters/:id` (DEV-68). El back
