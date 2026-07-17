@@ -1,34 +1,15 @@
-import type { TemplateSection } from "./template.types";
-
 /**
- * Espejan `prisma/schemas/Playbook.prisma` + `src/common/types/playbook.types.ts`
- * de browchar-api (DEV-20).
+ * Tipos de dominio — Playbook.
  *
- * Nota sobre `template`: en la DB es una columna `Json`, pero el back siempre
- * la puebla con la forma `TemplateSection[]` (ver `template-validation.ts`).
- * La tipamos así en el front porque es la forma real con la que hay que
- * renderizar el form dinámico — no como `unknown`.
- *
- * Nota sobre fechas: la API serializa `DateTime` como string ISO 8601 sobre
- * HTTP (JSON no tiene tipo Date), por eso `createdAt` es `string`, no `Date`.
+ * DEV-197: los wire shapes viven en `@tpklabs/browchar-contracts` (ver la
+ * nota sobre `template` y fechas ISO ahí). Re-exports por compatibilidad de
+ * imports (`@/types`); código nuevo usa los nombres por endpoint
+ * (`PlaybookListResponse`, `PlaybookGetResponse`) directo del paquete.
  */
-export interface Playbook {
-  id: string;
-  gameId: string;
-  name: string;
-  version: number;
-  createdAt: string;
-  description?: string | null;
-  template: TemplateSection[];
-}
-
-/**
- * Vista de Playbook expuesta por `GET /playbooks` y `GET /playbooks/:id`:
- * el back reemplaza `gameId` por el objeto `game` (id + nombre resueltos).
- */
-export interface PlaybookView extends Omit<Playbook, "gameId"> {
-  game: {
-    gameId: string;
-    gameName: string;
-  };
-}
+export type {
+  Playbook,
+  PlaybookView,
+  PlaybookListRequestParams,
+  PlaybookListResponse,
+  PlaybookGetResponse,
+} from "@tpklabs/browchar-contracts";

@@ -1,21 +1,7 @@
 /**
- * Espejan `src/common/pagination.ts` + el envelope `Paginated` de
- * `src/common/types/character.types.ts` en browchar-api (DEV-20).
- *
- * Éstos no son específicos de Characters: cualquier endpoint paginado futuro
- * (Campaigns, etc.) responde con este mismo envelope `data`/`meta`.
+ * DEV-197: el envelope de paginación y sus defaults viven en
+ * `@tpklabs/browchar-contracts` (una sola definición FE/BE). Re-exports por
+ * compatibilidad de imports (`@/types`).
  */
-
-export const DEFAULT_PAGE = 1;
-export const DEFAULT_PAGE_SIZE = 20;
-
-export interface PaginationMeta {
-  page: number;
-  pageSize: number;
-  total: number;
-}
-
-export interface Paginated<T> {
-  data: T[];
-  meta: PaginationMeta;
-}
+export { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from "@tpklabs/browchar-contracts";
+export type { Paginated, PaginationMeta } from "@tpklabs/browchar-contracts";

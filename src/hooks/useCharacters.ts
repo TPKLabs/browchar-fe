@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { apiClient } from "@/api/client";
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from "@/types";
-import type { CharacterListItem, Paginated } from "@/types";
+import type { CharacterListResponse } from "@tpklabs/browchar-contracts";
 
 /**
  * `GET /characters` — listado paginado (DEV-60). Devuelve el envelope
@@ -30,7 +30,7 @@ export function useCharacters(params: UseCharactersParams = {}) {
   return useQuery({
     queryKey: charactersQueryKey({ page, pageSize }),
     queryFn: () =>
-      apiClient.get<Paginated<CharacterListItem>>(
+      apiClient.get<CharacterListResponse>(
         `/characters?page=${page}&pageSize=${pageSize}`,
       ),
     // Al cambiar de página mantené los datos previos visibles mientras llega la

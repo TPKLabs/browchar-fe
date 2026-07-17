@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { UpdateCharacterInput as UpdateCharacterContract } from "@tpklabs/browchar-contracts";
+import type { CharacterUpdateRequestBody as UpdateCharacterContract } from "@tpklabs/browchar-contracts";
 
 import { apiClient } from "@/api/client";
-import type { CharacterView } from "@/types";
+import type { CharacterUpdateResponse } from "@tpklabs/browchar-contracts";
 import { characterQueryKey } from "./useCharacter";
 
 /**
@@ -29,7 +29,7 @@ export function useUpdateCharacter(id: string) {
 
   return useMutation({
     mutationFn: (input: UpdateCharacterInput) =>
-      apiClient.patch<CharacterView>(`/characters/${id}`, input),
+      apiClient.patch<CharacterUpdateResponse>(`/characters/${id}`, input),
     onSuccess: (character) => {
       queryClient.setQueryData(characterQueryKey(id), character);
       queryClient.invalidateQueries({ queryKey: ["characters"] });

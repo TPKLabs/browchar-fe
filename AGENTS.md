@@ -19,12 +19,15 @@ su propia carpeta top-level:
 - `src/hooks/` = hooks de TanStack Query (`useGames.ts`, `usePlaybooks.ts`,
   `useCreateCharacter.ts`), uno por endpoint/mutación, sin subcarpetas por
   dominio.
-- `src/types/` = tipos de dominio, espejo de los modelos de browchar-api.
-  Los tipos y la validación compartidos con la API (`FieldType`,
-  `FieldDefinition`, `buildTemplateSchema`, los schemas de request) vienen del
-  paquete `@tpklabs/browchar-contracts` — no los redefinas a mano (DEV-153).
-  `src/types/*` re-exporta de ahí por compatibilidad; código nuevo importa
-  directo del paquete.
+- `src/types/` = re-exports de `@tpklabs/browchar-contracts` + vistas
+  solo-FE (`CharacterSummary`). **Regla (DEV-197): TODOS los tipos de request
+  y response vienen del paquete** — nunca interfaces locales espejo. Convención
+  de nombres: `<Entidad><Operación>{Response,RequestBody,RequestParams}` con
+  operaciones List/Get/Create/Update/Delete (ej. `CharacterUpdateRequestBody`,
+  `CharacterListResponse`). Código nuevo importa directo del paquete; los
+  re-exports de `src/types/*` existen por compatibilidad. Un tipo derivado con
+  narrowing deliberado (ej. `Required<CharacterUpdateRequestBody>` en
+  `useUpdateCharacter`) es válido solo si DERIVA del tipo del paquete.
 - `src/api/` = el cliente HTTP (`client.ts`).
 - `src/schemas/` = schemas Zod + lógica de validación/defaults específica de un
   dominio (ej. `characterSchema.ts`: schema y defaults del form de creación de
