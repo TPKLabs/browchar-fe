@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated coverage report (also in .prettierignore).
+    "coverage/**",
   ]),
   // Shared rules kept in sync with browchar-api (framework-agnostic).
   {
