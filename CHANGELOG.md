@@ -57,7 +57,6 @@ a known issue or a future consideration in a commit message.
 
 ### Known Issues
 
-- package.json pins @tpklabs/browchar-contracts ^0.1.0 while the latest published version is 0.2.0 (bumped in browchar-api DEV-53), so installs — including this CI — resolve stale contracts. The pin and lockfile need a bump to pick up 0.2.0.
 - `apiClient`'s `request` doesn't catch network-level failures (e.g. `fetch`
   rejecting with a `TypeError` when offline or on a DNS/CORS failure) — only
   non-2xx HTTP responses are wrapped in `ApiError`. Callers doing
