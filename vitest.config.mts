@@ -10,6 +10,10 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     exclude: ["node_modules", ".next", "e2e"],
+    // Aire por encima del asyncUtilTimeout (5s en vitest.setup.ts) para que el
+    // test no se corte antes de que un `findBy*` termine de esperar bajo la
+    // sobrecarga de --coverage.
+    testTimeout: 15000,
     coverage: {
       provider: "v8",
       // En Vitest 4 definir `include` ya reporta TODO archivo que matchea, lo
@@ -25,7 +29,7 @@ export default defineConfig({
       exclude: [
         "src/**/*.types.ts",
         "src/types/**",
-        "src/**/index.ts",
+        "src/**/index.{ts,tsx}",
         "src/components/ui/**",
         "src/app/layout.tsx",
         "src/**/*.test.{ts,tsx}",
