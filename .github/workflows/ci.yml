@@ -2,26 +2,43 @@ name: CI
 
 on:
   pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Al declarar permissions se pierden los defaults: packages:read es
+# imprescindible para que npm resuelva @tpklabs/browchar-contracts
+# (acceso otorgado al repo vía Manage Actions access del package).
+permissions:
+  contents: read
+  packages: read
+
+# Un push nuevo a la misma rama cancela la corrida anterior.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       # .npmrc referencia ${GITHUB_TOKEN}: sin la variable definida, cualquier
-      # comando npm falla con "Failed to replace env in config". El token del
-      # propio workflow alcanza para leer @tpklabs/browchar-contracts de
-      # GitHub Packages (mismo owner, TPKLabs).
+      # comando npm falla con "Failed to replace env in config".
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 20
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Format check
+        run: npm run format:check
 
       - name: Lint
         run: npm run lint
