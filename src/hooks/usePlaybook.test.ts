@@ -1,17 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
+import { http, HttpResponse } from "msw";
 
+import { server } from "@/mocks/server";
 import { playbookQueryKey, usePlaybook } from "./usePlaybook";
-
-function mockResponse(status: number, body?: unknown) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
-  } as Response;
-}
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -36,13 +30,16 @@ const playbook = {
 };
 
 describe("usePlaybook", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("trae el playbook desde GET /playbooks/:id", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(mockResponse(200, playbook));
-    vi.stubGlobal("fetch", fetchMock);
+    let receivedUrl: string | undefined;
+    let receivedMethod: string | undefined;
+    server.use(
+      http.get("/playbooks/:id", ({ request }) => {
+        receivedUrl = new URL(request.url).pathname;
+        receivedMethod = request.method;
+        return HttpResponse.json(playbook);
+      }),
+    );
 
     const { result } = renderHook(() => usePlaybook("angel"), {
       wrapper: createWrapper(),
@@ -51,20 +48,24 @@ describe("usePlaybook", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toEqual(playbook);
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("/playbooks/angel");
-    expect(init.method).toBe("GET");
+    expect(receivedUrl).toBe("/playbooks/angel");
+    expect(receivedMethod).toBe("GET");
   });
 
   it("no fetchea cuando enabled es false", () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
+    let callCount = 0;
+    server.use(
+      http.get("/playbooks/:id", () => {
+        callCount++;
+        return HttpResponse.json(playbook);
+      }),
+    );
 
     renderHook(() => usePlaybook("angel", { enabled: false }), {
       wrapper: createWrapper(),
     });
 
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(callCount).toBe(0);
   });
 
   it("no reintenta ante un 404: no es un error transitorio", async () => {
@@ -72,13 +73,18 @@ describe("usePlaybook", () => {
     const wrapper = ({ children }: { children: ReactNode }) =>
       createElement(QueryClientProvider, { client: queryClient }, children);
 
-    const fetchMock = vi.fn().mockResolvedValue(mockResponse(404));
-    vi.stubGlobal("fetch", fetchMock);
+    let callCount = 0;
+    server.use(
+      http.get("/playbooks/:id", () => {
+        callCount++;
+        return HttpResponse.json({}, { status: 404 });
+      }),
+    );
 
     const { result } = renderHook(() => usePlaybook("angel"), { wrapper });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(callCount).toBe(1);
   });
 
   it("keyea la query por id", () => {

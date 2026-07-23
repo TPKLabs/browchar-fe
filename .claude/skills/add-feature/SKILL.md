@@ -63,6 +63,46 @@ This matches the pre-commit paired-test rule: any new file under `src/app`,
 `src/mocks`, or `src/utils` needs a sibling `*.test.ts(x)` unless it's exempt
 (pure types, barrels, shadcn `components/ui` vendor files).
 
+### Network tests use MSW, never a manual `fetch` stub
+
+Any hook or container test that hits the network goes through MSW
+(`src/mocks/server.ts`), not `vi.stubGlobal("fetch", ...)` — that pattern is
+retired (DEV-200). Register the response for that test with `server.use(...)`
+before rendering; it auto-resets after the test (`vitest.setup.ts`).
+
+```ts
+import { http, HttpResponse } from "msw";
+import { server } from "@/mocks/server";
+
+it("hace POST /characters con el input", async () => {
+  let receivedBody: unknown;
+  server.use(
+    http.post("/characters", async ({ request }) => {
+      receivedBody = await request.json();
+      return HttpResponse.json({ id: "char-1", name: "Aria" }, { status: 201 });
+    }),
+  );
+
+  // render + act …
+
+  expect(receivedBody).toEqual(INPUT);
+});
+```
+
+Capture what you need to assert (method is implicit in `http.get`/`.post`/
+`.patch`/`.delete`; read `request.url`/`request.json()` inside the resolver
+for query params or body) into a local variable, then assert on it after
+`await waitFor(...)` — don't try to inspect a mock's call args, there's no
+`fetchMock` anymore.
+
+If the feature hits an endpoint that doesn't have a handler yet, add one to
+`src/mocks/handlers/<domain>.ts` (grouped by resource, aggregated in
+`src/mocks/handlers/index.ts`) with an inert default (404/501 — force every
+test to configure its own scenario rather than silently passing against an
+accidental happy path). `src/mocks/**` is test infrastructure: it's exempt
+from the coverage gate (DEV-37) and doesn't need its own paired test — it's
+exercised indirectly by every test that calls `server.use(...)`.
+
 ## 6. Before finishing
 
 Run `npm run lint`, `npm run typecheck`, `npm run test:run`, and

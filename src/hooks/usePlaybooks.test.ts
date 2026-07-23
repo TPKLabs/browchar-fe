@@ -1,17 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
+import { http, HttpResponse } from "msw";
 
+import { server } from "@/mocks/server";
 import { usePlaybooks } from "./usePlaybooks";
-
-function mockResponse(status: number, body?: unknown) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
-  } as Response;
-}
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -29,17 +23,16 @@ function createWrapper() {
 }
 
 describe("usePlaybooks", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("trae la lista completa de playbooks desde GET /playbooks", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        mockResponse(200, [{ id: "guerrero", name: "Guerrero" }]),
-      );
-    vi.stubGlobal("fetch", fetchMock);
+    let receivedUrl: string | undefined;
+    let receivedMethod: string | undefined;
+    server.use(
+      http.get("/playbooks", ({ request }) => {
+        receivedUrl = new URL(request.url).pathname;
+        receivedMethod = request.method;
+        return HttpResponse.json([{ id: "guerrero", name: "Guerrero" }]);
+      }),
+    );
 
     const { result } = renderHook(() => usePlaybooks(), {
       wrapper: createWrapper(),
@@ -48,16 +41,18 @@ describe("usePlaybooks", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toEqual([{ id: "guerrero", name: "Guerrero" }]);
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("/playbooks");
-    expect(init.method).toBe("GET");
+    expect(receivedUrl).toBe("/playbooks");
+    expect(receivedMethod).toBe("GET");
   });
 
   it("agrega ?gameId= a la URL cuando se pasa un gameId", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(mockResponse(200, [{ id: "guerrero" }]));
-    vi.stubGlobal("fetch", fetchMock);
+    let receivedSearch: string | undefined;
+    server.use(
+      http.get("/playbooks", ({ request }) => {
+        receivedSearch = new URL(request.url).search;
+        return HttpResponse.json([{ id: "guerrero" }]);
+      }),
+    );
 
     const { result } = renderHook(() => usePlaybooks("dnd5e"), {
       wrapper: createWrapper(),
@@ -65,13 +60,13 @@ describe("usePlaybooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    const [url] = fetchMock.mock.calls[0];
-    expect(url).toBe("/playbooks?gameId=dnd5e");
+    expect(receivedSearch).toBe("?gameId=dnd5e");
   });
 
   it("expone el error cuando la request falla", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(mockResponse(500));
-    vi.stubGlobal("fetch", fetchMock);
+    server.use(
+      http.get("/playbooks", () => HttpResponse.json({}, { status: 500 })),
+    );
 
     const { result } = renderHook(() => usePlaybooks(), {
       wrapper: createWrapper(),
