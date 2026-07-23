@@ -1,17 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { http, HttpResponse } from "msw";
 
+import { server } from "@/mocks/server";
 import { RecentCharacters } from "./recentCharacters";
-
-function mockResponse(status: number, body?: unknown) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
-  } as Response;
-}
 
 function renderWithClient(ui: ReactNode) {
   const queryClient = new QueryClient({
@@ -39,32 +33,29 @@ function item(id: string, name: string) {
 }
 
 describe("RecentCharacters", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("pide sólo la primera página con pageSize 3", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      mockResponse(200, {
-        data: [item("c1", "Doc")],
-        meta: { page: 1, pageSize: 3, total: 1 },
+    let receivedUrl: string | undefined;
+    server.use(
+      http.get("/characters", ({ request }) => {
+        receivedUrl =
+          new URL(request.url).pathname + new URL(request.url).search;
+        return HttpResponse.json({
+          data: [item("c1", "Doc")],
+          meta: { page: 1, pageSize: 3, total: 1 },
+        });
       }),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     renderWithClient(<RecentCharacters />);
 
     expect(await screen.findByText("Doc")).toBeInTheDocument();
-    expect(String(fetchMock.mock.calls[0][0])).toBe(
-      "/characters?page=1&pageSize=3",
-    );
+    expect(receivedUrl).toBe("/characters?page=1&pageSize=3");
   });
 
   it("renderiza los personajes que devuelve la API (ya vienen capados a pageSize)", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        mockResponse(200, {
+    server.use(
+      http.get("/characters", () =>
+        HttpResponse.json({
           data: [item("c1", "Doc"), item("c2", "Rust"), item("c3", "Vale")],
           meta: { page: 1, pageSize: 3, total: 9 },
         }),
@@ -79,10 +70,9 @@ describe("RecentCharacters", () => {
   });
 
   it("muestra el estado vacío propio de la home", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        mockResponse(200, {
+    server.use(
+      http.get("/characters", () =>
+        HttpResponse.json({
           data: [],
           meta: { page: 1, pageSize: 3, total: 0 },
         }),
@@ -99,7 +89,9 @@ describe("RecentCharacters", () => {
   });
 
   it("muestra un error cuando la request falla", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(500)));
+    server.use(
+      http.get("/characters", () => HttpResponse.json({}, { status: 500 })),
+    );
 
     renderWithClient(<RecentCharacters />);
 

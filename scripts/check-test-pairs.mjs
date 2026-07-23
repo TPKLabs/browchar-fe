@@ -36,6 +36,10 @@ const EXEMPT_PATTERNS = [
   /\.types\.ts$/,
   /(^|\/)index\.tsx?$/,
   /(^|\/)components\/ui\//, // shadcn/ui vendor primitives
+  // src/mocks/** (DEV-200): infraestructura de testing MSW (handlers/server),
+  // no lógica de app — la ejercita cada test que la usa vía server.use(...).
+  // Mismo criterio que *.module.ts en la API.
+  /^src\/mocks\//,
 ];
 
 function isExempt(file) {

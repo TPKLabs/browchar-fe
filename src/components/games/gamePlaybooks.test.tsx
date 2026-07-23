@@ -1,8 +1,10 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { http, HttpResponse } from "msw";
 
+import { server } from "@/mocks/server";
 import { FieldType, type Game, type PlaybookView } from "@/types";
 import { GamePlaybooks } from "./gamePlaybooks";
 
@@ -25,24 +27,10 @@ const PLAYBOOKS: PlaybookView[] = [
   },
 ];
 
-function jsonResponse(body: unknown) {
-  return {
-    ok: true,
-    status: 200,
-    text: () => Promise.resolve(JSON.stringify(body)),
-  } as Response;
-}
-
-/** Router de fetch por URL: /games -> juegos, /playbooks?gameId= -> playbooks. */
-function stubApi() {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn((url: string) => {
-      if (url.startsWith("/games")) return Promise.resolve(jsonResponse(GAMES));
-      if (url.startsWith("/playbooks"))
-        return Promise.resolve(jsonResponse(PLAYBOOKS));
-      throw new Error(`URL no esperada: ${url}`);
-    }),
+function mockGamesAndPlaybooks() {
+  server.use(
+    http.get("/games", () => HttpResponse.json(GAMES)),
+    http.get("/playbooks", () => HttpResponse.json(PLAYBOOKS)),
   );
 }
 
@@ -56,12 +44,8 @@ function renderWithClient(ui: ReactNode) {
 }
 
 describe("GamePlaybooks", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("muestra el nombre del juego y sus playbooks", async () => {
-    stubApi();
+    mockGamesAndPlaybooks();
 
     renderWithClient(<GamePlaybooks gameId="dnd5e" />);
 
@@ -72,18 +56,23 @@ describe("GamePlaybooks", () => {
   });
 
   it("pide los playbooks filtrados por ese gameId", async () => {
-    stubApi();
+    let receivedSearch: string | undefined;
+    server.use(
+      http.get("/games", () => HttpResponse.json(GAMES)),
+      http.get("/playbooks", ({ request }) => {
+        receivedSearch = new URL(request.url).search;
+        return HttpResponse.json(PLAYBOOKS);
+      }),
+    );
 
     renderWithClient(<GamePlaybooks gameId="dnd5e" />);
 
     await screen.findByText("Guerrero");
-    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
-    const calledUrls = fetchMock.mock.calls.map((c) => c[0] as string);
-    expect(calledUrls).toContain("/playbooks?gameId=dnd5e");
+    expect(receivedSearch).toBe("?gameId=dnd5e");
   });
 
   it("tiene un link de vuelta al listado de juegos", async () => {
-    stubApi();
+    mockGamesAndPlaybooks();
 
     renderWithClient(<GamePlaybooks gameId="dnd5e" />);
 

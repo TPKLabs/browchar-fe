@@ -1,8 +1,10 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { http, HttpResponse } from "msw";
 
+import { server } from "@/mocks/server";
 import { CharactersListContainer } from "./charactersListContainer";
 
 function item(id: string, name: string) {
@@ -19,14 +21,6 @@ function item(id: string, name: string) {
     playbookName: "Angel",
     gameName: "Apocalypse World",
   };
-}
-
-function mockResponse(status: number, body?: unknown) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
-  } as Response;
 }
 
 function renderWithClient(ui: ReactNode) {
@@ -58,12 +52,8 @@ const envelope = {
 };
 
 describe("CharactersListContainer", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("muestra un estado de carga mientras llegan los personajes", () => {
-    vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
+    server.use(http.get("/characters", () => new Promise(() => {})));
 
     renderWithClient(<CharactersListContainer />);
 
@@ -73,22 +63,26 @@ describe("CharactersListContainer", () => {
   });
 
   it("renderiza los personajes reales de GET /characters", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(mockResponse(200, envelope));
-    vi.stubGlobal("fetch", fetchMock);
+    let requested = false;
+    server.use(
+      http.get("/characters", () => {
+        requested = true;
+        return HttpResponse.json(envelope);
+      }),
+    );
 
     renderWithClient(<CharactersListContainer />);
 
     expect(await screen.findByText("Doc")).toBeInTheDocument();
     expect(screen.getByText("Angel")).toBeInTheDocument();
     expect(screen.getByText("Apocalypse World")).toBeInTheDocument();
-    expect(String(fetchMock.mock.calls[0][0])).toContain("/characters");
+    expect(requested).toBe(true);
   });
 
   it("muestra el estado vacío cuando la API no devuelve personajes", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        mockResponse(200, {
+    server.use(
+      http.get("/characters", () =>
+        HttpResponse.json({
           data: [],
           meta: { page: 1, pageSize: 20, total: 0 },
         }),
@@ -103,7 +97,9 @@ describe("CharactersListContainer", () => {
   });
 
   it("muestra un error cuando la request falla", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(500)));
+    server.use(
+      http.get("/characters", () => HttpResponse.json({}, { status: 500 })),
+    );
 
     renderWithClient(<CharactersListContainer />);
 
@@ -113,10 +109,7 @@ describe("CharactersListContainer", () => {
   });
 
   it("no muestra controles de paginación cuando entra todo en una página", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(mockResponse(200, envelope)),
-    );
+    server.use(http.get("/characters", () => HttpResponse.json(envelope)));
 
     renderWithClient(<CharactersListContainer />);
 
@@ -127,23 +120,23 @@ describe("CharactersListContainer", () => {
   });
 
   it("muestra los controles y navega a la página siguiente usando meta", async () => {
-    const fetchMock = vi.fn((url: string) =>
-      Promise.resolve(
-        mockResponse(
-          200,
-          String(url).includes("page=2")
-            ? {
-                data: [item("c2", "Vale")],
-                meta: { page: 2, pageSize: 20, total: 45 },
-              }
-            : {
-                data: [item("c1", "Doc")],
-                meta: { page: 1, pageSize: 20, total: 45 },
-              },
-        ),
-      ),
+    let requestedPage2 = false;
+    server.use(
+      http.get("/characters", ({ request }) => {
+        const page = new URL(request.url).searchParams.get("page");
+        if (page === "2") {
+          requestedPage2 = true;
+          return HttpResponse.json({
+            data: [item("c2", "Vale")],
+            meta: { page: 2, pageSize: 20, total: 45 },
+          });
+        }
+        return HttpResponse.json({
+          data: [item("c1", "Doc")],
+          meta: { page: 1, pageSize: 20, total: 45 },
+        });
+      }),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     renderWithClient(<CharactersListContainer />);
 
@@ -156,11 +149,7 @@ describe("CharactersListContainer", () => {
     fireEvent.click(screen.getByRole("button", { name: /siguiente/i }));
 
     expect(await screen.findByText("Página 2 de 3")).toBeInTheDocument();
-    await waitFor(() =>
-      expect(
-        fetchMock.mock.calls.some((c) => String(c[0]).includes("page=2")),
-      ).toBe(true),
-    );
+    await waitFor(() => expect(requestedPage2).toBe(true));
     expect(await screen.findByText("Vale")).toBeInTheDocument();
   });
 });

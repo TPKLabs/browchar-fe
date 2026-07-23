@@ -1,8 +1,10 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { http, HttpResponse } from "msw";
 
+import { server } from "@/mocks/server";
 import { FieldType, type PlaybookView } from "@/types";
 import { CharacterCreateFormContainer } from "./characterCreateFormContainer";
 
@@ -23,12 +25,8 @@ const PLAYBOOKS: PlaybookView[] = [
   },
 ];
 
-function mockResponse(status: number, body?: unknown) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
-  } as Response;
+function mockPlaybooksSuccess() {
+  server.use(http.get("/playbooks", () => HttpResponse.json(PLAYBOOKS)));
 }
 
 function renderWithClient(ui: ReactNode) {
@@ -41,12 +39,8 @@ function renderWithClient(ui: ReactNode) {
 }
 
 describe("CharacterCreateFormContainer", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("muestra un estado de carga mientras llegan los playbooks", () => {
-    vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
+    server.use(http.get("/playbooks", () => new Promise(() => {})));
 
     renderWithClient(<CharacterCreateFormContainer />);
 
@@ -54,10 +48,7 @@ describe("CharacterCreateFormContainer", () => {
   });
 
   it("preselecciona el playbook a partir del query param una vez cargados", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(mockResponse(200, PLAYBOOKS)),
-    );
+    mockPlaybooksSuccess();
 
     renderWithClient(
       <CharacterCreateFormContainer initialPlaybookId="guerrero" />,
@@ -68,10 +59,7 @@ describe("CharacterCreateFormContainer", () => {
   });
 
   it("pide elegir juego y playbook cuando no hay id preseleccionado", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(mockResponse(200, PLAYBOOKS)),
-    );
+    mockPlaybooksSuccess();
 
     renderWithClient(<CharacterCreateFormContainer />);
 
@@ -81,7 +69,9 @@ describe("CharacterCreateFormContainer", () => {
   });
 
   it("muestra un error cuando la request de playbooks falla", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(500)));
+    server.use(
+      http.get("/playbooks", () => HttpResponse.json({}, { status: 500 })),
+    );
 
     renderWithClient(<CharacterCreateFormContainer />);
 
@@ -91,15 +81,19 @@ describe("CharacterCreateFormContainer", () => {
   });
 
   it("al enviar, postea el personaje a POST /characters y muestra éxito", async () => {
-    // Router por URL: GET /playbooks -> lista; POST /characters -> creado.
-    const fetchMock = vi.fn((url: string, _init?: RequestInit) =>
-      Promise.resolve(
-        String(url).startsWith("/characters")
-          ? mockResponse(201, { id: "char-1", name: "Aria" })
-          : mockResponse(200, PLAYBOOKS),
-      ),
+    mockPlaybooksSuccess();
+    let receivedMethod: string | undefined;
+    let receivedBody: unknown;
+    server.use(
+      http.post("/characters", async ({ request }) => {
+        receivedMethod = request.method;
+        receivedBody = await request.json();
+        return HttpResponse.json(
+          { id: "char-1", name: "Aria" },
+          { status: 201 },
+        );
+      }),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     renderWithClient(
       <CharacterCreateFormContainer initialPlaybookId="guerrero" />,
@@ -119,13 +113,8 @@ describe("CharacterCreateFormContainer", () => {
       screen.getByRole("button", { name: "Ver personaje" }),
     ).toHaveAttribute("href", "/characters/char-1");
 
-    const postCall = fetchMock.mock.calls.find((c) =>
-      String(c[0]).startsWith("/characters"),
-    );
-    expect(postCall).toBeTruthy();
-    const init = postCall![1]!;
-    expect(init.method).toBe("POST");
-    expect(JSON.parse(init.body as string)).toEqual({
+    expect(receivedMethod).toBe("POST");
+    expect(receivedBody).toEqual({
       name: "Aria",
       playbookId: "guerrero",
       ownerId: "usr_demo",

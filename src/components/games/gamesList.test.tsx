@@ -1,8 +1,10 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { http, HttpResponse } from "msw";
 
+import { server } from "@/mocks/server";
 import type { Game } from "@/types";
 import { GamesList } from "./gamesList";
 
@@ -10,14 +12,6 @@ const GAMES: Game[] = [
   { id: "dnd5e", name: "D&D 5e" },
   { id: "pathfinder", name: "Pathfinder" },
 ];
-
-function mockResponse(status: number, body?: unknown) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
-  } as Response;
-}
 
 function renderWithClient(ui: ReactNode) {
   const queryClient = new QueryClient({
@@ -29,12 +23,8 @@ function renderWithClient(ui: ReactNode) {
 }
 
 describe("GamesList", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("muestra un estado de carga mientras llega la respuesta", () => {
-    vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
+    server.use(http.get("/games", () => new Promise(() => {})));
 
     renderWithClient(<GamesList />);
 
@@ -42,7 +32,7 @@ describe("GamesList", () => {
   });
 
   it("renderiza cada juego y lo linkea a su página", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(200, GAMES)));
+    server.use(http.get("/games", () => HttpResponse.json(GAMES)));
 
     renderWithClient(<GamesList />);
 
@@ -54,7 +44,7 @@ describe("GamesList", () => {
   });
 
   it("muestra un estado vacío cuando no hay juegos", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(200, [])));
+    server.use(http.get("/games", () => HttpResponse.json([])));
 
     renderWithClient(<GamesList />);
 
@@ -64,7 +54,9 @@ describe("GamesList", () => {
   });
 
   it("muestra un error cuando la request falla (ej. endpoint aún no existe)", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(404)));
+    server.use(
+      http.get("/games", () => HttpResponse.json({}, { status: 404 })),
+    );
 
     renderWithClient(<GamesList />);
 

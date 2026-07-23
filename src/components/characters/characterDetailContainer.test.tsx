@@ -1,8 +1,10 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { http, HttpResponse } from "msw";
 
+import { server } from "@/mocks/server";
 import { CharacterDetailContainer } from "./characterDetailContainer";
 
 const { push, useRouter } = vi.hoisted(() => ({
@@ -33,12 +35,11 @@ const playbook = {
   template: [],
 };
 
-function mockResponse(status: number, body?: unknown) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
-  } as Response;
+function mockCharacterAndPlaybook() {
+  server.use(
+    http.get("/characters/:id", () => HttpResponse.json(character)),
+    http.get("/playbooks/:id", () => HttpResponse.json(playbook)),
+  );
 }
 
 function renderWithClient(ui: ReactNode) {
@@ -51,13 +52,9 @@ function renderWithClient(ui: ReactNode) {
 }
 
 describe("CharacterDetailContainer", () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("muestra un estado de carga mientras llega el personaje", () => {
     useRouter.mockReturnValue({ push });
-    vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
+    server.use(http.get("/characters/:id", () => new Promise(() => {})));
 
     renderWithClient(<CharacterDetailContainer characterId="char_1" />);
 
@@ -66,42 +63,36 @@ describe("CharacterDetailContainer", () => {
 
   it("trae el personaje y su playbook, y renderiza el detalle", async () => {
     useRouter.mockReturnValue({ push });
-    const fetchMock = vi.fn((url: string) =>
-      Promise.resolve(
-        String(url).startsWith("/characters")
-          ? mockResponse(200, character)
-          : mockResponse(200, playbook),
-      ),
+    let receivedCharacterUrl: string | undefined;
+    let receivedPlaybookUrl: string | undefined;
+    server.use(
+      http.get("/characters/:id", ({ request }) => {
+        receivedCharacterUrl = new URL(request.url).pathname;
+        return HttpResponse.json(character);
+      }),
+      http.get("/playbooks/:id", ({ request }) => {
+        receivedPlaybookUrl = new URL(request.url).pathname;
+        return HttpResponse.json(playbook);
+      }),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     renderWithClient(<CharacterDetailContainer characterId="char_1" />);
 
     expect(await screen.findByLabelText(/Nombre/)).toHaveValue("Doc");
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/characters/char_1",
-      expect.objectContaining({ method: "GET" }),
-    );
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/playbooks/angel",
-      expect.objectContaining({ method: "GET" }),
-    );
+    expect(receivedCharacterUrl).toBe("/characters/char_1");
+    expect(receivedPlaybookUrl).toBe("/playbooks/angel");
   });
 
   it("guarda cambios contra PATCH /characters/:id", async () => {
     useRouter.mockReturnValue({ push });
-    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
-      if (String(url).startsWith("/playbooks")) {
-        return Promise.resolve(mockResponse(200, playbook));
-      }
-      if (init?.method === "PATCH") {
-        return Promise.resolve(
-          mockResponse(200, { ...character, name: "Nuevo nombre" }),
-        );
-      }
-      return Promise.resolve(mockResponse(200, character));
-    });
-    vi.stubGlobal("fetch", fetchMock);
+    mockCharacterAndPlaybook();
+    let receivedBody: unknown;
+    server.use(
+      http.patch("/characters/:id", async ({ request }) => {
+        receivedBody = await request.json();
+        return HttpResponse.json({ ...character, name: "Nuevo nombre" });
+      }),
+    );
 
     renderWithClient(<CharacterDetailContainer characterId="char_1" />);
 
@@ -110,30 +101,21 @@ describe("CharacterDetailContainer", () => {
     fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/characters/char_1",
-        expect.objectContaining({
-          method: "PATCH",
-          body: JSON.stringify({ name: "Nuevo nombre", values: {} }),
-        }),
-      ),
+      expect(receivedBody).toEqual({ name: "Nuevo nombre", values: {} }),
     );
   });
 
   it("muestra un error si el guardado falla", async () => {
     useRouter.mockReturnValue({ push });
-    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
-      if (String(url).startsWith("/playbooks")) {
-        return Promise.resolve(mockResponse(200, playbook));
-      }
-      if (init?.method === "PATCH") {
-        return Promise.resolve(
-          mockResponse(404, { message: "Character char_1 no encontrado" }),
-        );
-      }
-      return Promise.resolve(mockResponse(200, character));
-    });
-    vi.stubGlobal("fetch", fetchMock);
+    mockCharacterAndPlaybook();
+    server.use(
+      http.patch("/characters/:id", () =>
+        HttpResponse.json(
+          { message: "Character char_1 no encontrado" },
+          { status: 404 },
+        ),
+      ),
+    );
 
     renderWithClient(<CharacterDetailContainer characterId="char_1" />);
 
@@ -148,13 +130,13 @@ describe("CharacterDetailContainer", () => {
 
   it("muestra un mensaje específico cuando el personaje no existe (404)", async () => {
     useRouter.mockReturnValue({ push });
-    vi.stubGlobal(
-      "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          mockResponse(404, { message: "Character char_1 no encontrado" }),
+    server.use(
+      http.get("/characters/:id", () =>
+        HttpResponse.json(
+          { message: "Character char_1 no encontrado" },
+          { status: 404 },
         ),
+      ),
     );
 
     renderWithClient(<CharacterDetailContainer characterId="char_1" />);
@@ -166,7 +148,9 @@ describe("CharacterDetailContainer", () => {
 
   it("muestra un error genérico ante una falla no-404", async () => {
     useRouter.mockReturnValue({ push });
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(500)));
+    server.use(
+      http.get("/characters/:id", () => HttpResponse.json({}, { status: 500 })),
+    );
 
     renderWithClient(<CharacterDetailContainer characterId="char_1" />);
 
@@ -179,7 +163,9 @@ describe("CharacterDetailContainer", () => {
 
   it("siempre muestra un link para volver al listado, incluso en error", async () => {
     useRouter.mockReturnValue({ push });
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(500)));
+    server.use(
+      http.get("/characters/:id", () => HttpResponse.json({}, { status: 500 })),
+    );
 
     renderWithClient(<CharacterDetailContainer characterId="char_1" />);
 
