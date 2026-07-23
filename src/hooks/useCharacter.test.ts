@@ -1,17 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
+import { http, HttpResponse } from "msw";
 
+import { server } from "@/mocks/server";
 import { characterQueryKey, useCharacter } from "./useCharacter";
-
-function mockResponse(status: number, body?: unknown) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
-  } as Response;
-}
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -39,13 +33,16 @@ const character = {
 };
 
 describe("useCharacter", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("trae el personaje desde GET /characters/:id", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(mockResponse(200, character));
-    vi.stubGlobal("fetch", fetchMock);
+    let receivedUrl: string | undefined;
+    let receivedMethod: string | undefined;
+    server.use(
+      http.get("/characters/:id", ({ request }) => {
+        receivedUrl = new URL(request.url).pathname;
+        receivedMethod = request.method;
+        return HttpResponse.json(character);
+      }),
+    );
 
     const { result } = renderHook(() => useCharacter("char_1"), {
       wrapper: createWrapper(),
@@ -54,18 +51,19 @@ describe("useCharacter", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toEqual(character);
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("/characters/char_1");
-    expect(init.method).toBe("GET");
+    expect(receivedUrl).toBe("/characters/char_1");
+    expect(receivedMethod).toBe("GET");
   });
 
   it("expone un 404 cuando el personaje no existe (o fue soft-deleted)", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        mockResponse(404, { message: "Character char_1 no encontrado" }),
-      );
-    vi.stubGlobal("fetch", fetchMock);
+    server.use(
+      http.get("/characters/:id", () =>
+        HttpResponse.json(
+          { message: "Character char_1 no encontrado" },
+          { status: 404 },
+        ),
+      ),
+    );
 
     const { result } = renderHook(() => useCharacter("char_1"), {
       wrapper: createWrapper(),
@@ -82,13 +80,18 @@ describe("useCharacter", () => {
     const wrapper = ({ children }: { children: ReactNode }) =>
       createElement(QueryClientProvider, { client: queryClient }, children);
 
-    const fetchMock = vi.fn().mockResolvedValue(mockResponse(404));
-    vi.stubGlobal("fetch", fetchMock);
+    let callCount = 0;
+    server.use(
+      http.get("/characters/:id", () => {
+        callCount++;
+        return HttpResponse.json({}, { status: 404 });
+      }),
+    );
 
     const { result } = renderHook(() => useCharacter("char_1"), { wrapper });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(callCount).toBe(1);
   });
 
   it("keyea la query por id", () => {

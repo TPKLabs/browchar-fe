@@ -32,16 +32,37 @@ su propia carpeta top-level:
 - `src/schemas/` = schemas Zod + lógica de validación/defaults específica de un
   dominio (ej. `characterSchema.ts`: schema y defaults del form de creación de
   personaje). No es un hook ni un tipo ni un util genérico.
-- `src/mocks/` = datos de ejemplo compartidos entre pantallas (ej.
-  `sampleCharacters.ts`, usado tanto por la home como por `/characters`).
+- `src/mocks/` = infraestructura de testing MSW (DEV-200): `server.ts`
+  (`setupServer`, levantado en `vitest.setup.ts`) y `handlers/<dominio>.ts`
+  (uno por recurso — `characters.ts`, `playbooks.ts`, `games.ts` — agregados en
+  `handlers/index.ts`). Cada handler expone un default inerte (404/501); los
+  tests lo pisan con `server.use(...)` por caso. Ver la sección "Tests de red"
+  más abajo.
 - `src/utils/` = helpers genéricos, reusables entre dominios (`cn.ts`,
   `dates.ts`). Si algo es específico de un dominio, no es un util — va en
   `schemas/`, `hooks/` o el componente que lo usa.
 
 Importá siempre por alias `@/...`. Todo archivo nuevo bajo
-`src/app|components|hooks|types|api|schemas|mocks|utils` va con su test
-pareado (salvo `*.types.ts`, `index.*` y `components/ui/`). Ver "Estructura
-del proyecto" en el README para el detalle y un ejemplo.
+`src/app|components|hooks|types|api|schemas|utils` va con su test pareado
+(salvo `*.types.ts`, `index.*` y `components/ui/`). `src/mocks/**` es la
+excepción: es infraestructura de testing en sí misma (la ejercita cada test
+que la usa vía `server.use(...)`), así que no lleva su propio `.test.ts` y
+está excluida del gate de coverage (DEV-37) — igual criterio que la API con
+`*.module.ts`. Ver "Estructura del proyecto" en el README para el detalle y un
+ejemplo.
+
+## Tests de red: MSW, no `fetch` a mano
+
+Todo test de un hook o container que pega a la red usa MSW
+(`src/mocks/server.ts`), no `vi.stubGlobal("fetch", ...)` (DEV-200, retirado).
+Cada test registra su respuesta con `server.use(...)` antes de renderizar; se
+resetea solo entre tests (`vitest.setup.ts`). Para asserts que antes leían
+`fetchMock.mock.calls` (URL, query, body), ahora se capturan adentro del
+resolver (`request.url`, `await request.json()`) en una variable local y se
+verifican después del `await waitFor(...)` — no hay un mock cuyas llamadas
+inspeccionar. Si el endpoint no tiene handler todavía, se agrega a
+`src/mocks/handlers/<dominio>.ts`. Detalle y ejemplo completo en la skill
+`add-feature`.
 
 ## Coverage gate (DEV-37)
 

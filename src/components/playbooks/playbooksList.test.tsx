@@ -1,8 +1,10 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { http, HttpResponse } from "msw";
 
+import { server } from "@/mocks/server";
 import { FieldType, type PlaybookView } from "@/types";
 import { PlaybooksList } from "./playbooksList";
 
@@ -41,14 +43,6 @@ const PLAYBOOKS: PlaybookView[] = [
   },
 ];
 
-function mockResponse(status: number, body?: unknown) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
-  } as Response;
-}
-
 function renderWithClient(ui: ReactNode) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -59,12 +53,8 @@ function renderWithClient(ui: ReactNode) {
 }
 
 describe("PlaybooksList", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("muestra un estado de carga mientras llega la respuesta", () => {
-    vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
+    server.use(http.get("/playbooks", () => new Promise(() => {})));
 
     renderWithClient(<PlaybooksList />);
 
@@ -72,10 +62,7 @@ describe("PlaybooksList", () => {
   });
 
   it("renderiza cada playbook con su juego y versión", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(mockResponse(200, PLAYBOOKS)),
-    );
+    server.use(http.get("/playbooks", () => HttpResponse.json(PLAYBOOKS)));
 
     renderWithClient(<PlaybooksList />);
 
@@ -88,10 +75,7 @@ describe("PlaybooksList", () => {
   });
 
   it("linkea cada playbook al form de creación con su id", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(mockResponse(200, PLAYBOOKS)),
-    );
+    server.use(http.get("/playbooks", () => HttpResponse.json(PLAYBOOKS)));
 
     renderWithClient(<PlaybooksList />);
 
@@ -106,7 +90,9 @@ describe("PlaybooksList", () => {
   });
 
   it("muestra un error cuando la request falla", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(500)));
+    server.use(
+      http.get("/playbooks", () => HttpResponse.json({}, { status: 500 })),
+    );
 
     renderWithClient(<PlaybooksList />);
 
@@ -116,7 +102,7 @@ describe("PlaybooksList", () => {
   });
 
   it("muestra un estado vacío cuando no hay playbooks", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(200, [])));
+    server.use(http.get("/playbooks", () => HttpResponse.json([])));
 
     renderWithClient(<PlaybooksList />);
 
@@ -126,15 +112,17 @@ describe("PlaybooksList", () => {
   });
 
   it("pide los playbooks filtrados por gameId cuando se pasa uno", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(mockResponse(200, [PLAYBOOKS[0]]));
-    vi.stubGlobal("fetch", fetchMock);
+    let receivedSearch: string | undefined;
+    server.use(
+      http.get("/playbooks", ({ request }) => {
+        receivedSearch = new URL(request.url).search;
+        return HttpResponse.json([PLAYBOOKS[0]]);
+      }),
+    );
 
     renderWithClient(<PlaybooksList gameId="dnd5e" />);
 
     await screen.findByText("Guerrero");
-    const [url] = fetchMock.mock.calls[0];
-    expect(url).toBe("/playbooks?gameId=dnd5e");
+    expect(receivedSearch).toBe("?gameId=dnd5e");
   });
 });

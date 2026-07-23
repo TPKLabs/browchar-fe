@@ -1,21 +1,15 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
+import { http, HttpResponse } from "msw";
 
+import { server } from "@/mocks/server";
 import { characterQueryKey } from "./useCharacter";
 import {
   useUpdateCharacter,
   type UpdateCharacterInput,
 } from "./useUpdateCharacter";
-
-function mockResponse(status: number, body?: unknown) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
-  } as Response;
-}
 
 function createWrapper(queryClient: QueryClient) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -44,16 +38,25 @@ const UPDATED_CHARACTER = {
   deletedAt: null,
 };
 
-describe("useUpdateCharacter", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
+function mockUpdateSuccess() {
+  server.use(
+    http.patch("/characters/:id", () => HttpResponse.json(UPDATED_CHARACTER)),
+  );
+}
 
+describe("useUpdateCharacter", () => {
   it("hace PATCH /characters/:id con el input y devuelve el personaje actualizado", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(mockResponse(200, UPDATED_CHARACTER));
-    vi.stubGlobal("fetch", fetchMock);
+    let receivedUrl: string | undefined;
+    let receivedMethod: string | undefined;
+    let receivedBody: unknown;
+    server.use(
+      http.patch("/characters/:id", async ({ request }) => {
+        receivedUrl = new URL(request.url).pathname;
+        receivedMethod = request.method;
+        receivedBody = await request.json();
+        return HttpResponse.json(UPDATED_CHARACTER);
+      }),
+    );
 
     const queryClient = new QueryClient({
       defaultOptions: { mutations: { retry: false } },
@@ -67,17 +70,13 @@ describe("useUpdateCharacter", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toMatchObject({ id: "char_1", name: "Aria" });
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("/characters/char_1");
-    expect(init.method).toBe("PATCH");
-    expect(init.body).toBe(JSON.stringify(INPUT));
+    expect(receivedUrl).toBe("/characters/char_1");
+    expect(receivedMethod).toBe("PATCH");
+    expect(receivedBody).toEqual(INPUT);
   });
 
   it("escribe el personaje actualizado en la cache de useCharacter", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(mockResponse(200, UPDATED_CHARACTER));
-    vi.stubGlobal("fetch", fetchMock);
+    mockUpdateSuccess();
 
     const queryClient = new QueryClient({
       defaultOptions: { mutations: { retry: false } },
@@ -96,10 +95,7 @@ describe("useUpdateCharacter", () => {
   });
 
   it("invalida el listado de personajes al guardar", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(mockResponse(200, UPDATED_CHARACTER));
-    vi.stubGlobal("fetch", fetchMock);
+    mockUpdateSuccess();
 
     const queryClient = new QueryClient({
       defaultOptions: { mutations: { retry: false } },
@@ -117,13 +113,17 @@ describe("useUpdateCharacter", () => {
   });
 
   it("expone el ApiError cuando el back rechaza (ej. 400 de validación)", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      mockResponse(400, {
-        message: "Los datos del personaje no son válidos para el Playbook",
-        errors: [{ field: "concepto", message: "concepto es requerido" }],
-      }),
+    server.use(
+      http.patch("/characters/:id", () =>
+        HttpResponse.json(
+          {
+            message: "Los datos del personaje no son válidos para el Playbook",
+            errors: [{ field: "concepto", message: "concepto es requerido" }],
+          },
+          { status: 400 },
+        ),
+      ),
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     const queryClient = new QueryClient({
       defaultOptions: { mutations: { retry: false } },
@@ -142,12 +142,14 @@ describe("useUpdateCharacter", () => {
   });
 
   it("expone el ApiError cuando el personaje no existe (404)", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        mockResponse(404, { message: "Character char_1 no encontrado" }),
-      );
-    vi.stubGlobal("fetch", fetchMock);
+    server.use(
+      http.patch("/characters/:id", () =>
+        HttpResponse.json(
+          { message: "Character char_1 no encontrado" },
+          { status: 404 },
+        ),
+      ),
+    );
 
     const queryClient = new QueryClient({
       defaultOptions: { mutations: { retry: false } },

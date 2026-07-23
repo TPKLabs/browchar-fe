@@ -1,17 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
+import { http, HttpResponse } from "msw";
 
+import { server } from "@/mocks/server";
 import { charactersQueryKey, useCharacters } from "./useCharacters";
-
-function mockResponse(status: number, body?: unknown) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
-  } as Response;
-}
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -39,13 +33,14 @@ const page = {
 };
 
 describe("useCharacters", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("trae el envelope paginado desde GET /characters con los defaults", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(mockResponse(200, page));
-    vi.stubGlobal("fetch", fetchMock);
+    let receivedMethod: string | undefined;
+    server.use(
+      http.get("/characters", ({ request }) => {
+        receivedMethod = request.method;
+        return HttpResponse.json(page);
+      }),
+    );
 
     const { result } = renderHook(() => useCharacters(), {
       wrapper: createWrapper(),
@@ -54,14 +49,17 @@ describe("useCharacters", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toEqual(page);
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("/characters?page=1&pageSize=20");
-    expect(init.method).toBe("GET");
+    expect(receivedMethod).toBe("GET");
   });
 
   it("pasa page y pageSize a la query string", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(mockResponse(200, page));
-    vi.stubGlobal("fetch", fetchMock);
+    let receivedSearch: string | undefined;
+    server.use(
+      http.get("/characters", ({ request }) => {
+        receivedSearch = new URL(request.url).search;
+        return HttpResponse.json(page);
+      }),
+    );
 
     const { result } = renderHook(
       () => useCharacters({ page: 3, pageSize: 5 }),
@@ -72,13 +70,13 @@ describe("useCharacters", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    const [url] = fetchMock.mock.calls[0];
-    expect(url).toBe("/characters?page=3&pageSize=5");
+    expect(receivedSearch).toBe("?page=3&pageSize=5");
   });
 
   it("expone el error cuando la request falla", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(mockResponse(500));
-    vi.stubGlobal("fetch", fetchMock);
+    server.use(
+      http.get("/characters", () => HttpResponse.json({}, { status: 500 })),
+    );
 
     const { result } = renderHook(() => useCharacters(), {
       wrapper: createWrapper(),

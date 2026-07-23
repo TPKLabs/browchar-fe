@@ -26,12 +26,18 @@ export default defineConfig({
       // - components/ui/ → primitivos shadcn vendored.
       // - app/layout.tsx → shell RSC raíz (fuentes + html), sin lógica (análogo
       //   al bootstrap de la API). Las pages SÍ entran: tienen test pareado.
+      // - mocks/ → infraestructura de testing (handlers MSW, DEV-200), no
+      //   lógica de app; sus ramas default (404/501 "sin handler configurado
+      //   en este test") solo corren cuando un test NO las pisa, que por
+      //   diseño nunca pasa — medirlas arrastraba el agregado al piso del
+      //   umbral sin decir nada real (análogo a excluir *.module.ts en la API).
       exclude: [
         "src/**/*.types.ts",
         "src/types/**",
         "src/**/index.{ts,tsx}",
         "src/components/ui/**",
         "src/app/layout.tsx",
+        "src/mocks/**",
         "src/**/*.test.{ts,tsx}",
         "src/**/*.d.ts",
       ],
