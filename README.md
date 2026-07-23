@@ -170,9 +170,43 @@ y vendor `components/ui/`.
 | `npm run format`        | Prettier (escribe cambios)                                      |
 | `npm run format:check`  | Prettier (solo chequea)                                         |
 | `npm test` / `test:run` | Vitest (watch / una sola corrida)                               |
+| `npm run test:coverage` | Vitest con cobertura (aplica el umbral de DEV-37)               |
+| `npm run test:e2e`      | Playwright (DEV-199, ver abajo)                                 |
 | `npm run commit`        | Commit guiado (Conventional Commits + actualiza `CHANGELOG.md`) |
 
 Antes de dar por terminado un cambio, correr `lint`, `typecheck` y `test:run`.
+
+## E2E tests (DEV-199)
+
+`npm run test:e2e` corre los specs de `e2e/*.spec.ts` con Playwright (headless,
+Chromium) contra un browser real. Cubre los 3 flujos críticos del MVP: crear
+personaje, listar y ver el detalle, y editarlo.
+
+**Estrategia de datos: mock en el borde de red, no `browchar-api` real.** Cada
+spec intercepta las llamadas a la API con `page.route()` (`e2e/mocks.ts`) y
+responde con fixtures fijas (`e2e/fixtures.ts`) — el mismo espíritu que MSW en
+la suite de Vitest (DEV-200), pero a nivel browser en vez de a nivel del
+proceso de test. Decisión tomada explícitamente sobre la alternativa (levantar
+`browchar-api` real contra un Postgres efímero, como hace el e2e de la API en
+DEV-149): acoplar el CI de este repo al de `browchar-api` —checkout de otro
+repo, Docker, Node 22.19+, todo su toolchain— a cambio de cobertura de
+integración real no se justificaba para lo que estos 3 flujos necesitan
+validar (UI y JS del cliente reales, de punta a punta en un browser real). El
+trade-off: no se prueba la integración FE+API+DB real, y una request sin mock
+sigue a la red real —sin backend escuchando, falla visible con error de
+conexión en la UI, nunca queda en un limbo silencioso— así que hay que
+mockear todo lo que la pantalla pide.
+
+```bash
+npx playwright install --with-deps chromium  # una vez, o si cambia la versión
+npm run test:e2e                             # levanta next dev en :3001 y corre los specs
+npx playwright show-report                   # ver el último reporte HTML
+```
+
+`playwright.config.ts` fuerza `NEXT_PUBLIC_API_URL=""` para el `webServer`
+(fetches relativos al origin de la app, determinista sin importar el
+`.env.local` de quien corre los tests). CI instala Chromium con
+`--with-deps` y sube el reporte HTML + traces como artefacto si algo falla.
 
 ## Convenciones de commits
 

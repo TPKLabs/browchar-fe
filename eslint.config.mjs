@@ -32,6 +32,15 @@ const eslintConfig = defineConfig([
       "no-console": "off",
     },
   },
+  // e2e/test.ts extiende `test` de Playwright con un fixture cuyo segundo
+  // parámetro se llama `use` por convención de esa API (no un hook de React)
+  // — eslint-plugin-react-hooks lo confunde con un custom hook por el nombre.
+  {
+    files: ["e2e/**/*.ts"],
+    rules: {
+      "react-hooks/rules-of-hooks": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

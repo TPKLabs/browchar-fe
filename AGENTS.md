@@ -72,3 +72,21 @@ cobertura global baja de **88% statements / 82% branches / 85% functions /
 88% lines**. El `include`/`exclude` del coverage refleja la misma convención de
 test pareado de arriba (excluye `*.types.ts`, `index.*`, `components/ui/` y
 `app/layout.tsx`, el shell RSC raíz; las pages con test pareado SÍ cuentan).
+
+## E2E tests (DEV-199)
+
+`npm run test:e2e` corre Playwright (`e2e/*.spec.ts`, headless, Chromium)
+contra un browser real, con la API mockeada en el borde de red (`page.route`,
+`e2e/mocks.ts` + `e2e/fixtures.ts`) — no depende de `browchar-api` real ni de
+Docker. Decisión y detalle en el README ("E2E tests").
+
+Cubre los **3 flujos críticos** del MVP (crear personaje, listar y ver
+detalle, editar), no cada feature nueva. Al tocar código de esos flujos —
+`characterCreateForm(Container)`, `charactersList(Container)`,
+`characterDetail(Container)` o sus pages — correr `npm run test:e2e` antes de
+terminar y actualizar el spec si cambiaron labels/roles/textos que usa. Para
+una feature que no toca esos flujos, alcanza con el test unitario/MSW pareado
+(ver arriba); no hace falta un spec E2E nuevo salvo que la feature agregue un
+flujo crítico propiamente dicho — en ese caso, un `e2e/<flujo>.spec.ts` nuevo
+siguiendo el patrón de `e2e/mocks.ts` (helpers `mockX(page, …)` por endpoint,
+scopeados con `getByRole("main")` cuando un texto se repite en la navbar).

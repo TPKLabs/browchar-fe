@@ -107,3 +107,16 @@ exercised indirectly by every test that calls `server.use(...)`.
 
 Run `npm run lint`, `npm run typecheck`, `npm run test:run`, and
 `npm run format`.
+
+## 7. E2E — only if this touches one of the 3 critical flows
+
+`e2e/*.spec.ts` (Playwright, DEV-199) covers create character, list+view
+detail, and edit character — not every feature. If this feature changes
+`characterCreateForm(Container)`, `charactersList(Container)`,
+`characterDetail(Container)`, or their pages, run `npm run test:e2e` and
+update the relevant spec if labels/roles/text it queries changed. Otherwise
+skip it — the unit + MSW test from step 5 is the bar for everything else. If
+the feature adds a genuinely new critical flow, add `e2e/<flow>.spec.ts`
+following `e2e/mocks.ts`'s pattern (a `mockX(page, …)` helper per endpoint via
+`page.route()`, scoped with `getByRole("main")` when a button's text repeats
+in the navbar).

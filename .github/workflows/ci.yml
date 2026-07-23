@@ -76,3 +76,24 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # E2E (DEV-199): black-box con Playwright, red mockeada en el borde
+      # (page.route, ver e2e/mocks.ts) — no depende de browchar-api ni de
+      # Docker, así que no hace falta un job aparte como el e2e de la API.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E tests
+        run: npm run test:e2e
+
+      # Si el E2E falla, subir el reporte HTML + traces (trace: "on-first-retry"
+      # en playwright.config.ts) para diagnosticar sin reproducir localmente.
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
