@@ -41,9 +41,7 @@ export const charactersHandlers = [
     );
   }),
 
-  // DEV-52 (Character: Eliminar) todavía no tiene hook consumidor — handler
-  // agregado igual porque el ticket DEV-200 lo lista explícitamente en el
-  // alcance, listo para cuando exista.
+  // DEV-52 (Character: Eliminar) — consumido por useDeleteCharacter.
   http.delete("/characters/:id", () => {
     return HttpResponse.json(
       {

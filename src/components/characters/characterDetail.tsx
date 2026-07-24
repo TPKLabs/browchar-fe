@@ -40,9 +40,20 @@ interface CharacterDetailProps {
    * componente aislado del data layer.
    */
   onSave?: (values: CharacterFormValues) => Promise<void>;
+  /**
+   * Seam para la integración con `DELETE /characters/:id` (DEV-71). La
+   * integración real la conecta `CharacterDetailContainer` vía
+   * `useDeleteCharacter`; por defecto es un stub que simula latencia y
+   * resuelve OK, igual criterio que `stubSave`.
+   */
+  onDelete?: () => Promise<void>;
 }
 
 async function stubSave(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 600));
+}
+
+async function stubDelete(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 600));
 }
 
@@ -62,6 +73,13 @@ function saveErrorMessage(error: unknown): string {
   return "No se pudo guardar el personaje. Intentá de nuevo más tarde.";
 }
 
+function deleteErrorMessage(error: unknown): string {
+  if (error instanceof ApiError && error.status === 404) {
+    return "Este personaje ya no existe o fue eliminado.";
+  }
+  return "No se pudo eliminar el personaje. Intentá de nuevo más tarde.";
+}
+
 /**
  * Detalle de un Character (DEV-51). No hay modo solo-lectura: los campos
  * siempre están listos para editar (mismo `DynamicField` que arma
@@ -76,9 +94,12 @@ function saveErrorMessage(error: unknown): string {
  * un mensaje según el tipo de error (`saveErrorMessage`) sin tocar el
  * baseline. "Cancelar" descarta cualquier edición sin guardar, volviendo al
  * último baseline (el guardado más reciente, no necesariamente los props
- * originales — ver `handleCancel`). "Eliminar" sigue el mismo criterio de
- * stub que `CharacterCard`: confirma y vuelve al listado sin pegarle al
- * backend.
+ * originales — ver `handleCancel`). "Eliminar" pide confirmación y llama a
+ * `onDelete` (DEV-71, `useDeleteCharacter` en el container); mientras está en
+ * curso el botón pasa a "Eliminando…" y queda deshabilitado para no disparar
+ * dos borrados en paralelo. Si `onDelete` rechaza (ej. 404: ya se borró en
+ * otra pestaña), se muestra el error y el formulario queda usable. `CharacterCard`
+ * en el listado todavía es un stub sin integración (ver su propio comentario).
  *
  * Auto-save (DEV-65, requerimiento agregado 2026-07-15): mientras el form
  * está dirty, se dispara un guardado automático cada `AUTO_SAVE_INTERVAL_MS`
@@ -94,9 +115,12 @@ export function CharacterDetail({
   character,
   playbook,
   onSave = stubSave,
+  onDelete = stubDelete,
 }: CharacterDetailProps) {
   const router = useRouter();
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<
     "idle" | "saving" | "saved"
   >("idle");
@@ -212,9 +236,17 @@ export function CharacterDetail({
     };
   }, []);
 
-  const handleDelete = () => {
-    if (window.confirm(`¿Eliminar a ${character.name}?`)) {
+  const handleDelete = async () => {
+    if (!window.confirm(`¿Eliminar a ${character.name}?`)) return;
+
+    setDeleteError(null);
+    setIsDeleting(true);
+    try {
+      await onDelete();
       router.push("/characters");
+    } catch (error) {
+      setIsDeleting(false);
+      setDeleteError(deleteErrorMessage(error));
     }
   };
 
@@ -256,10 +288,19 @@ export function CharacterDetail({
               variant="destructive"
               size="sm"
               onClick={handleDelete}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isDeleting}
             >
-              <Trash2 data-icon="inline-start" />
-              Eliminar
+              {isDeleting ? (
+                <>
+                  <Loader2 className="animate-spin" aria-hidden />
+                  Eliminando…
+                </>
+              ) : (
+                <>
+                  <Trash2 data-icon="inline-start" />
+                  Eliminar
+                </>
+              )}
             </Button>
             <Button type="submit" size="sm" disabled={!isDirty || isSubmitting}>
               {isSubmitting ? (
@@ -277,6 +318,12 @@ export function CharacterDetail({
         {saveError ? (
           <p role="alert" className="text-destructive mt-2 text-sm">
             {saveError}
+          </p>
+        ) : null}
+
+        {deleteError ? (
+          <p role="alert" className="text-destructive mt-2 text-sm">
+            {deleteError}
           </p>
         ) : null}
 

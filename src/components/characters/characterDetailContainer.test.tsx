@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -52,6 +52,10 @@ function renderWithClient(ui: ReactNode) {
 }
 
 describe("CharacterDetailContainer", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("muestra un estado de carga mientras llega el personaje", () => {
     useRouter.mockReturnValue({ push });
     server.use(http.get("/characters/:id", () => new Promise(() => {})));
@@ -103,6 +107,54 @@ describe("CharacterDetailContainer", () => {
     await waitFor(() =>
       expect(receivedBody).toEqual({ name: "Nuevo nombre", values: {} }),
     );
+  });
+
+  it("elimina el personaje contra DELETE /characters/:id y vuelve al listado", async () => {
+    useRouter.mockReturnValue({ push });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    mockCharacterAndPlaybook();
+    let receivedUrl: string | undefined;
+    let receivedMethod: string | undefined;
+    server.use(
+      http.delete("/characters/:id", ({ request }) => {
+        receivedUrl = new URL(request.url).pathname;
+        receivedMethod = request.method;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    renderWithClient(<CharacterDetailContainer characterId="char_1" />);
+
+    await screen.findByLabelText(/Nombre/);
+    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/characters"));
+    expect(receivedUrl).toBe("/characters/char_1");
+    expect(receivedMethod).toBe("DELETE");
+  });
+
+  it("muestra un error si la eliminación falla", async () => {
+    useRouter.mockReturnValue({ push });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    mockCharacterAndPlaybook();
+    server.use(
+      http.delete("/characters/:id", () =>
+        HttpResponse.json(
+          { message: "Character char_1 no encontrado" },
+          { status: 404 },
+        ),
+      ),
+    );
+
+    renderWithClient(<CharacterDetailContainer characterId="char_1" />);
+
+    await screen.findByLabelText(/Nombre/);
+    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+
+    expect(
+      await screen.findByText("Este personaje ya no existe o fue eliminado."),
+    ).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("muestra un error si el guardado falla", async () => {

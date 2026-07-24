@@ -379,24 +379,40 @@ describe("CharacterDetail", () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('"Eliminar" pide confirmación y, al aceptar, vuelve al listado', () => {
+  it('"Eliminar" pide confirmación y, al aceptar, llama a onDelete y vuelve al listado', async () => {
     useRouter.mockReturnValue({ push });
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const onDelete = vi.fn().mockResolvedValue(undefined);
 
-    render(<CharacterDetail character={character} playbook={playbook} />);
+    render(
+      <CharacterDetail
+        character={character}
+        playbook={playbook}
+        onDelete={onDelete}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
 
     expect(confirmSpy).toHaveBeenCalledWith("¿Eliminar a Doc?");
-    expect(push).toHaveBeenCalledWith("/characters");
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/characters"));
+    expect(onDelete).toHaveBeenCalledOnce();
   });
 
-  it("Eliminar no navega si se cancela la confirmación", () => {
+  it("Eliminar no llama a onDelete ni navega si se cancela la confirmación", () => {
     useRouter.mockReturnValue({ push });
     vi.spyOn(window, "confirm").mockReturnValue(false);
+    const onDelete = vi.fn().mockResolvedValue(undefined);
 
-    render(<CharacterDetail character={character} playbook={playbook} />);
+    render(
+      <CharacterDetail
+        character={character}
+        playbook={playbook}
+        onDelete={onDelete}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
 
+    expect(onDelete).not.toHaveBeenCalled();
     expect(push).not.toHaveBeenCalled();
   });
 
@@ -405,6 +421,79 @@ describe("CharacterDetail", () => {
     render(<CharacterDetail character={character} playbook={playbook} />);
 
     expect(screen.getByRole("button", { name: /Eliminar/ })).not.toBeDisabled();
+  });
+
+  it('muestra "Eliminando…" y deshabilita el botón mientras onDelete está pendiente', async () => {
+    useRouter.mockReturnValue({ push });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    let resolveDelete!: () => void;
+    const onDelete = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDelete = resolve;
+        }),
+    );
+
+    render(
+      <CharacterDetail
+        character={character}
+        playbook={playbook}
+        onDelete={onDelete}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Eliminando/ })).toBeDisabled(),
+    );
+    expect(push).not.toHaveBeenCalled();
+
+    resolveDelete();
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/characters"));
+  });
+
+  it("muestra un mensaje cuando onDelete rechaza con un 404 y no navega", async () => {
+    useRouter.mockReturnValue({ push });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const onDelete = vi
+      .fn()
+      .mockRejectedValue(new ApiError(404, "Character char_1 no encontrado"));
+
+    render(
+      <CharacterDetail
+        character={character}
+        playbook={playbook}
+        onDelete={onDelete}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+
+    expect(
+      await screen.findByText("Este personaje ya no existe o fue eliminado."),
+    ).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /Eliminar/ })).not.toBeDisabled();
+  });
+
+  it("muestra un mensaje genérico cuando onDelete rechaza con un error inesperado", async () => {
+    useRouter.mockReturnValue({ push });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const onDelete = vi.fn().mockRejectedValue(new Error("network down"));
+
+    render(
+      <CharacterDetail
+        character={character}
+        playbook={playbook}
+        onDelete={onDelete}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+
+    expect(
+      await screen.findByText(
+        "No se pudo eliminar el personaje. Intentá de nuevo más tarde.",
+      ),
+    ).toBeInTheDocument();
   });
 
   describe("auto-save (DEV-65)", () => {
