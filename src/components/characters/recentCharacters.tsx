@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { QueryError, QueryLoading } from "@/components/queryState";
 import { useCharacters } from "@/hooks/useCharacters";
-import { CharacterCard } from "./characterCard";
+import { CharacterCardContainer } from "./characterCardContainer";
 import { toCharacterSummary } from "./toCharacterSummary";
 
 /** Cuántos personajes recientes muestra la home. */
@@ -49,7 +49,7 @@ export function RecentCharacters() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {characters.map((character) => (
-        <CharacterCard key={character.id} character={character} />
+        <CharacterCardContainer key={character.id} character={character} />
       ))}
     </div>
   );

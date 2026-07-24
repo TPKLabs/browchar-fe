@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 
 import type { CharacterSummary } from "@/types";
 import { CharactersList } from "./charactersList";
@@ -24,23 +26,36 @@ const CHARACTERS: CharacterSummary[] = [
   },
 ];
 
+function renderWithClient(ui: ReactNode) {
+  const queryClient = new QueryClient({
+    defaultOptions: { mutations: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
+
 describe("CharactersList", () => {
   it("muestra un estado de carga", () => {
-    render(<CharactersList characters={[]} isPending isError={false} />);
+    renderWithClient(
+      <CharactersList characters={[]} isPending isError={false} />,
+    );
     expect(screen.getByRole("status")).toHaveTextContent(
       "Cargando personajes…",
     );
   });
 
   it("muestra un error", () => {
-    render(<CharactersList characters={[]} isPending={false} isError />);
+    renderWithClient(
+      <CharactersList characters={[]} isPending={false} isError />,
+    );
     expect(screen.getByRole("alert")).toHaveTextContent(
       "No se pudieron cargar los personajes",
     );
   });
 
   it("muestra un estado vacío cuando no hay personajes", () => {
-    render(
+    renderWithClient(
       <CharactersList characters={[]} isPending={false} isError={false} />,
     );
     expect(
@@ -49,7 +64,7 @@ describe("CharactersList", () => {
   });
 
   it("renderiza cada personaje", () => {
-    render(
+    renderWithClient(
       <CharactersList
         characters={CHARACTERS}
         isPending={false}

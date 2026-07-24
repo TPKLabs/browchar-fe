@@ -11,8 +11,9 @@ import { ApiError } from "@/api/client";
 import { FieldType, type CharacterView, type PlaybookView } from "@/types";
 import { CharacterDetail } from "./characterDetail";
 
-const { push, useRouter } = vi.hoisted(() => ({
+const { push, replace, useRouter } = vi.hoisted(() => ({
   push: vi.fn(),
+  replace: vi.fn(),
   useRouter: vi.fn(),
 }));
 
@@ -379,31 +380,132 @@ describe("CharacterDetail", () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('"Eliminar" pide confirmación y, al aceptar, vuelve al listado', () => {
-    useRouter.mockReturnValue({ push });
+  it('"Eliminar" pide confirmación y, al aceptar, llama a onDelete y vuelve al listado', async () => {
+    useRouter.mockReturnValue({ replace });
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const onDelete = vi.fn().mockResolvedValue(undefined);
 
-    render(<CharacterDetail character={character} playbook={playbook} />);
+    render(
+      <CharacterDetail
+        character={character}
+        playbook={playbook}
+        onDelete={onDelete}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
 
     expect(confirmSpy).toHaveBeenCalledWith("¿Eliminar a Doc?");
-    expect(push).toHaveBeenCalledWith("/characters");
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/characters"));
+    expect(onDelete).toHaveBeenCalledOnce();
   });
 
-  it("Eliminar no navega si se cancela la confirmación", () => {
-    useRouter.mockReturnValue({ push });
+  it("Eliminar no llama a onDelete ni navega si se cancela la confirmación", () => {
+    useRouter.mockReturnValue({ replace });
     vi.spyOn(window, "confirm").mockReturnValue(false);
+    const onDelete = vi.fn().mockResolvedValue(undefined);
 
-    render(<CharacterDetail character={character} playbook={playbook} />);
+    render(
+      <CharacterDetail
+        character={character}
+        playbook={playbook}
+        onDelete={onDelete}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
 
-    expect(push).not.toHaveBeenCalled();
+    expect(onDelete).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it("Eliminar siempre está habilitado, haya o no cambios sin guardar", () => {
     useRouter.mockReturnValue({ push });
     render(<CharacterDetail character={character} playbook={playbook} />);
 
+    expect(screen.getByRole("button", { name: /Eliminar/ })).not.toBeDisabled();
+  });
+
+  it('muestra "Eliminando…" y deshabilita el botón mientras onDelete está pendiente', async () => {
+    useRouter.mockReturnValue({ replace });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    let resolveDelete!: () => void;
+    const onDelete = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDelete = resolve;
+        }),
+    );
+
+    render(
+      <CharacterDetail
+        character={character}
+        playbook={playbook}
+        onDelete={onDelete}
+      />,
+    );
+    const nameInput = screen.getByLabelText(/Nombre/);
+    fireEvent.change(nameInput, { target: { value: "Doc editado" } });
+    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Eliminando/ })).toBeDisabled(),
+    );
+    expect(nameInput).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancelar" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Guardar cambios" }),
+    ).toBeDisabled();
+    expect(replace).not.toHaveBeenCalled();
+
+    resolveDelete();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/characters"));
+  });
+
+  it("vuelve al listado cuando onDelete rechaza con un 404 (éxito terminal)", async () => {
+    useRouter.mockReturnValue({ replace });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const onDelete = vi
+      .fn()
+      .mockRejectedValue(new ApiError(404, "Character char_1 no encontrado"));
+
+    render(
+      <CharacterDetail
+        character={character}
+        playbook={playbook}
+        onDelete={onDelete}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+
+    // Un 404 = el personaje ya no está: se reconcilia como éxito y se vuelve al
+    // listado, sin dejar un mensaje de error en un detalle que ya no existe.
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/characters"));
+    expect(
+      screen.queryByText(
+        "No se pudo eliminar el personaje. Intentá de nuevo más tarde.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it("muestra un mensaje genérico cuando onDelete rechaza con un error inesperado", async () => {
+    useRouter.mockReturnValue({ replace });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const onDelete = vi.fn().mockRejectedValue(new Error("network down"));
+
+    render(
+      <CharacterDetail
+        character={character}
+        playbook={playbook}
+        onDelete={onDelete}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+
+    expect(
+      await screen.findByText(
+        "No se pudo eliminar el personaje. Intentá de nuevo más tarde.",
+      ),
+    ).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: /Eliminar/ })).not.toBeDisabled();
   });
 

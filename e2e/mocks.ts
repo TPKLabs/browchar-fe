@@ -59,10 +59,15 @@ export function mockPlaybookDetail(page: Page, playbook: PlaybookView) {
 
 export function mockCharactersList(
   page: Page,
-  envelope: CharacterListResponse,
+  // Acepta un thunk para listados con estado: el borrado desde una tarjeta
+  // invalida `["characters"]` y refetchea, así que el mock tiene que poder
+  // devolver el listado ya actualizado (sin el personaje) en esa segunda GET.
+  envelope: CharacterListResponse | (() => CharacterListResponse),
 ) {
   return jsonRoute(page, `**${API_PREFIX}/characters*`, "GET", (route) =>
-    route.fulfill({ json: envelope }),
+    route.fulfill({
+      json: typeof envelope === "function" ? envelope() : envelope,
+    }),
   );
 }
 
@@ -81,6 +86,11 @@ interface ApiErrorBody {
 interface MutationResult {
   status?: number;
   json: Character | ApiErrorBody;
+}
+
+interface DeleteResult {
+  status?: number;
+  json?: ApiErrorBody;
 }
 
 export function mockCreateCharacter(
@@ -109,6 +119,21 @@ export function mockUpdateCharacter(
     async (route) => {
       const { status = 200, json } = handler(route.request().postDataJSON());
       await route.fulfill({ status, json });
+    },
+  );
+}
+
+export function mockDeleteCharacter(
+  page: Page,
+  handler: () => DeleteResult = () => ({ status: 204 }),
+) {
+  return jsonRoute(
+    page,
+    `**${API_PREFIX}/characters/*`,
+    "DELETE",
+    async (route) => {
+      const { status = 204, json } = handler();
+      await route.fulfill(json === undefined ? { status } : { status, json });
     },
   );
 }
