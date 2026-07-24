@@ -27,7 +27,7 @@ import {
   buildValuesFromCharacter,
   type CharacterFormValues,
 } from "@/schemas/characterSchema";
-import { deleteErrorMessage } from "./deleteErrorMessage";
+import { DELETE_ERROR_MESSAGE } from "./deleteErrorMessage";
 import { DynamicField } from "./dynamicField";
 
 interface CharacterDetailProps {
@@ -90,10 +90,13 @@ function saveErrorMessage(error: unknown): string {
  * último baseline (el guardado más reciente, no necesariamente los props
  * originales — ver `handleCancel`). "Eliminar" pide confirmación y llama a
  * `onDelete` (DEV-71, `useDeleteCharacter` en el container); mientras está en
- * curso el botón pasa a "Eliminando…" y queda deshabilitado para no disparar
- * dos borrados en paralelo. Si `onDelete` rechaza (ej. 404: ya se borró en
- * otra pestaña), se muestra el error y el formulario queda usable. `CharacterCard`
- * en el listado todavía es un stub sin integración (ver su propio comentario).
+ * curso el botón pasa a "Eliminando…" y queda deshabilitado (`isDeletingRef`
+ * corta un doble clic de forma síncrona). Al eliminar con éxito se vuelve al
+ * listado con `router.replace` (el detalle borrado no debe quedar en el
+ * historial para "Atrás"); un 404 se trata igual que un éxito (el personaje ya
+ * no está — lo borró otra sesión), y sólo un error genuino (500, red) muestra
+ * el mensaje y deja el form usable. La misma integración vive en
+ * `CharacterCard` para el listado (vía `CharacterCardContainer`).
  *
  * Auto-save (DEV-65, requerimiento agregado 2026-07-15): mientras el form
  * está dirty, se dispara un guardado automático cada `AUTO_SAVE_INTERVAL_MS`
@@ -255,9 +258,17 @@ export function CharacterDetail({
       // borrado: replace evita que "Atrás" vuelva a una pantalla que dará 404.
       router.replace("/characters");
     } catch (error) {
+      // Un 404 es éxito terminal, no un error: el personaje ya no está (lo
+      // borró otra sesión), que es el estado buscado. Reconciliamos volviendo
+      // al listado en vez de dejar el detalle abierto con un mensaje. Otros
+      // errores (500, red) sí se muestran y dejan el form usable.
+      if (error instanceof ApiError && error.status === 404) {
+        router.replace("/characters");
+        return;
+      }
       isDeletingRef.current = false;
       setIsDeleting(false);
-      setDeleteError(deleteErrorMessage(error));
+      setDeleteError(DELETE_ERROR_MESSAGE);
     }
   };
 

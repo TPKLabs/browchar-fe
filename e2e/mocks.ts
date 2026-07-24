@@ -59,10 +59,15 @@ export function mockPlaybookDetail(page: Page, playbook: PlaybookView) {
 
 export function mockCharactersList(
   page: Page,
-  envelope: CharacterListResponse,
+  // Acepta un thunk para listados con estado: el borrado desde una tarjeta
+  // invalida `["characters"]` y refetchea, así que el mock tiene que poder
+  // devolver el listado ya actualizado (sin el personaje) en esa segunda GET.
+  envelope: CharacterListResponse | (() => CharacterListResponse),
 ) {
   return jsonRoute(page, `**${API_PREFIX}/characters*`, "GET", (route) =>
-    route.fulfill({ json: envelope }),
+    route.fulfill({
+      json: typeof envelope === "function" ? envelope() : envelope,
+    }),
   );
 }
 

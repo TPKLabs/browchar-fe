@@ -134,7 +134,7 @@ describe("CharacterDetailContainer", () => {
     expect(receivedMethod).toBe("DELETE");
   });
 
-  it("muestra un error si la eliminación falla", async () => {
+  it("vuelve al listado si el DELETE responde 404 (éxito terminal)", async () => {
     useRouter.mockReturnValue({ replace });
     vi.spyOn(window, "confirm").mockReturnValue(true);
     mockCharacterAndPlaybook();
@@ -152,8 +152,28 @@ describe("CharacterDetailContainer", () => {
     await screen.findByLabelText(/Nombre/);
     fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
 
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/characters"));
+  });
+
+  it("muestra un error y no navega si el DELETE falla con 500", async () => {
+    useRouter.mockReturnValue({ replace });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    mockCharacterAndPlaybook();
+    server.use(
+      http.delete("/characters/:id", () =>
+        HttpResponse.json({ message: "boom" }, { status: 500 }),
+      ),
+    );
+
+    renderWithClient(<CharacterDetailContainer characterId="char_1" />);
+
+    await screen.findByLabelText(/Nombre/);
+    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+
     expect(
-      await screen.findByText("Este personaje ya no existe o fue eliminado."),
+      await screen.findByText(
+        "No se pudo eliminar el personaje. Intentá de nuevo más tarde.",
+      ),
     ).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
   });

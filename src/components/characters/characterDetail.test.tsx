@@ -460,7 +460,7 @@ describe("CharacterDetail", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/characters"));
   });
 
-  it("muestra un mensaje cuando onDelete rechaza con un 404 y no navega", async () => {
+  it("vuelve al listado cuando onDelete rechaza con un 404 (éxito terminal)", async () => {
     useRouter.mockReturnValue({ replace });
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const onDelete = vi
@@ -476,11 +476,14 @@ describe("CharacterDetail", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
 
+    // Un 404 = el personaje ya no está: se reconcilia como éxito y se vuelve al
+    // listado, sin dejar un mensaje de error en un detalle que ya no existe.
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/characters"));
     expect(
-      await screen.findByText("Este personaje ya no existe o fue eliminado."),
-    ).toBeInTheDocument();
-    expect(replace).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: /Eliminar/ })).not.toBeDisabled();
+      screen.queryByText(
+        "No se pudo eliminar el personaje. Intentá de nuevo más tarde.",
+      ),
+    ).not.toBeInTheDocument();
   });
 
   it("muestra un mensaje genérico cuando onDelete rechaza con un error inesperado", async () => {
@@ -502,6 +505,8 @@ describe("CharacterDetail", () => {
         "No se pudo eliminar el personaje. Intentá de nuevo más tarde.",
       ),
     ).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /Eliminar/ })).not.toBeDisabled();
   });
 
   describe("auto-save (DEV-65)", () => {
