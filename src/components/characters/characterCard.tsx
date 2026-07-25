@@ -2,10 +2,11 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { Loader2, Swords, Trash2 } from "lucide-react";
+import { Swords, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/confirmationDialog";
 import {
   Card,
   CardContent,
@@ -45,26 +46,27 @@ async function stubDelete(): Promise<void> {
  * No hay botón de editar separado: la edición vive inline en la pantalla de
  * detalle (DEV-51, `CharacterDetail`) — no hay una ruta `/characters/:id/edit`.
  *
- * "Eliminar" pide confirmación y llama a `onDelete`. Mientras está en curso, el
- * botón pasa a spinner y tanto él como "Ver detalle" quedan deshabilitados
- * (`isDeletingRef` corta un doble clic de forma síncrona, antes de que React
- * re-renderice con `isDeleting`). La card **no** se auto-oculta: al eliminar
- * con éxito, `useDeleteCharacter` saca al personaje de la cache del listado y
- * el padre la desmonta — no hay estado local que se desincronice. Ante un
- * error genuino (no 404, que es éxito terminal) se muestra el mensaje inline y
- * la card sigue usable.
+ * "Eliminar" abre un `ConfirmationDialog` (DEV-74) y, al confirmar, llama a
+ * `onDelete`. Mientras está en curso, el diálogo muestra el loading y tanto el
+ * botón de borrar como "Ver detalle" quedan deshabilitados (`isDeletingRef`
+ * corta un doble clic de forma síncrona, antes de que React re-renderice con
+ * `isDeleting`). La card **no** se auto-oculta: al eliminar con éxito,
+ * `useDeleteCharacter` saca al personaje de la cache del listado y el padre la
+ * desmonta — no hay estado local que se desincronice. Ante un error genuino (no
+ * 404, que es éxito terminal) se cierra el diálogo, se muestra el mensaje inline
+ * y la card sigue usable.
  */
 export function CharacterCard({
   character,
   onDelete = stubDelete,
 }: CharacterCardProps) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const isDeletingRef = useRef(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const handleDelete = async () => {
+  const handleConfirmDelete = async () => {
     if (isDeletingRef.current) return;
-    if (!window.confirm(`¿Eliminar a ${character.name}?`)) return;
 
     isDeletingRef.current = true;
     setDeleteError(null);
@@ -76,6 +78,7 @@ export function CharacterCard({
     } catch {
       isDeletingRef.current = false;
       setIsDeleting(false);
+      setConfirmOpen(false);
       setDeleteError(DELETE_ERROR_MESSAGE);
     }
   };
@@ -116,14 +119,10 @@ export function CharacterCard({
             variant="destructive"
             size="icon"
             aria-label="Eliminar personaje"
-            onClick={handleDelete}
+            onClick={() => setConfirmOpen(true)}
             disabled={isDeleting}
           >
-            {isDeleting ? (
-              <Loader2 className="animate-spin" aria-hidden />
-            ) : (
-              <Trash2 aria-hidden />
-            )}
+            <Trash2 aria-hidden />
           </Button>
         </div>
         {deleteError ? (
@@ -132,6 +131,16 @@ export function CharacterCard({
           </p>
         ) : null}
       </CardFooter>
+
+      <ConfirmationDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Eliminar personaje"
+        description={`Esta acción eliminará a ${character.name} de tu colección. No se puede deshacer.`}
+        confirmLabel="Eliminar personaje"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+      />
     </Card>
   );
 }

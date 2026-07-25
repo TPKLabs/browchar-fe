@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 
 import type { CharacterSummary } from "@/types";
 import { CharacterCard } from "./characterCard";
@@ -83,33 +89,44 @@ describe("CharacterCard", () => {
       vi.restoreAllMocks();
     });
 
-    it("pide confirmación y llama a onDelete si se confirma", async () => {
-      vi.spyOn(window, "confirm").mockReturnValue(true);
-      const onDelete = vi.fn().mockResolvedValue(undefined);
-      render(<CharacterCard character={CHARACTER} onDelete={onDelete} />);
-
+    /** Abre el diálogo de confirmación desde el botón de la card y lo devuelve. */
+    async function openConfirmDialog() {
       fireEvent.click(
         screen.getByRole("button", { name: "Eliminar personaje" }),
       );
+      return screen.findByRole("alertdialog", { name: "Eliminar personaje" });
+    }
 
-      expect(window.confirm).toHaveBeenCalledWith("¿Eliminar a Mad Dog?");
+    it("abre el diálogo de confirmación y llama a onDelete al confirmar", async () => {
+      const onDelete = vi.fn().mockResolvedValue(undefined);
+      render(<CharacterCard character={CHARACTER} onDelete={onDelete} />);
+
+      const dialog = await openConfirmDialog();
+      expect(
+        within(dialog).getByText(/Esta acción eliminará a Mad Dog/),
+      ).toBeInTheDocument();
+
+      fireEvent.click(
+        within(dialog).getByRole("button", { name: "Eliminar personaje" }),
+      );
+
       await waitFor(() => expect(onDelete).toHaveBeenCalledOnce());
     });
 
-    it("no llama a onDelete si se cancela la confirmación", () => {
-      vi.spyOn(window, "confirm").mockReturnValue(false);
+    it("no llama a onDelete si se cancela en el diálogo", async () => {
       const onDelete = vi.fn().mockResolvedValue(undefined);
       render(<CharacterCard character={CHARACTER} onDelete={onDelete} />);
 
-      fireEvent.click(
-        screen.getByRole("button", { name: "Eliminar personaje" }),
-      );
+      const dialog = await openConfirmDialog();
+      fireEvent.click(within(dialog).getByRole("button", { name: "Cancelar" }));
 
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
       expect(onDelete).not.toHaveBeenCalled();
     });
 
-    it("un doble clic rápido dispara un solo onDelete (guard síncrono)", async () => {
-      vi.spyOn(window, "confirm").mockReturnValue(true);
+    it("un doble clic rápido en confirmar dispara un solo onDelete (guard síncrono)", async () => {
       let resolveDelete!: () => void;
       const onDelete = vi.fn(
         () =>
@@ -119,18 +136,20 @@ describe("CharacterCard", () => {
       );
       render(<CharacterCard character={CHARACTER} onDelete={onDelete} />);
 
-      const trash = screen.getByRole("button", { name: "Eliminar personaje" });
+      const dialog = await openConfirmDialog();
+      const confirm = within(dialog).getByRole("button", {
+        name: "Eliminar personaje",
+      });
       // Dos clics antes de cualquier re-render: el segundo debe cortarse por el
-      // ref síncrono, no por el `disabled` (que TanStack/React publican diferido).
-      fireEvent.click(trash);
-      fireEvent.click(trash);
+      // ref síncrono, no por el `disabled` (que React publica diferido).
+      fireEvent.click(confirm);
+      fireEvent.click(confirm);
 
       expect(onDelete).toHaveBeenCalledOnce();
       resolveDelete();
     });
 
-    it("muestra spinner y deshabilita ambos botones mientras onDelete está pendiente", async () => {
-      vi.spyOn(window, "confirm").mockReturnValue(true);
+    it("muestra loading en el diálogo mientras onDelete está pendiente", async () => {
       let resolveDelete!: () => void;
       const onDelete = vi.fn(
         () =>
@@ -140,32 +159,30 @@ describe("CharacterCard", () => {
       );
       render(<CharacterCard character={CHARACTER} onDelete={onDelete} />);
 
+      const dialog = await openConfirmDialog();
       fireEvent.click(
-        screen.getByRole("button", { name: "Eliminar personaje" }),
+        within(dialog).getByRole("button", { name: "Eliminar personaje" }),
       );
 
       await waitFor(() =>
         expect(
-          screen.getByRole("button", { name: "Eliminar personaje" }),
+          within(dialog).getByRole("button", { name: "Eliminar personaje" }),
         ).toBeDisabled(),
       );
-      // "Ver detalle" es un <a> (Link): base-ui lo deshabilita con
-      // aria-disabled + pointer-events-none, no con el atributo `disabled`
-      // nativo (que un ancla no soporta).
       expect(
-        screen.getByRole("button", { name: "Ver detalle" }),
-      ).toHaveAttribute("aria-disabled", "true");
+        within(dialog).getByRole("button", { name: "Cancelar" }),
+      ).toBeDisabled();
 
       resolveDelete();
     });
 
-    it("muestra un mensaje y deja la card usable ante un error de onDelete", async () => {
-      vi.spyOn(window, "confirm").mockReturnValue(true);
+    it("cierra el diálogo, muestra un mensaje y deja la card usable ante un error", async () => {
       const onDelete = vi.fn().mockRejectedValue(new Error("boom"));
       render(<CharacterCard character={CHARACTER} onDelete={onDelete} />);
 
+      const dialog = await openConfirmDialog();
       fireEvent.click(
-        screen.getByRole("button", { name: "Eliminar personaje" }),
+        within(dialog).getByRole("button", { name: "Eliminar personaje" }),
       );
 
       expect(
@@ -173,6 +190,9 @@ describe("CharacterCard", () => {
           "No se pudo eliminar el personaje. Intentá de nuevo más tarde.",
         ),
       ).toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
       expect(screen.getByText("Mad Dog")).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: "Eliminar personaje" }),

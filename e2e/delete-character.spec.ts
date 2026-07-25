@@ -26,11 +26,11 @@ test("elimina un personaje desde el detalle y vuelve al listado", async ({
   await page.goto(`/characters/${CHARACTER.id}`);
   await expect(page.getByLabel("Nombre")).toHaveValue(CHARACTER.name);
 
-  page.once("dialog", async (dialog) => {
-    expect(dialog.message()).toBe(`¿Eliminar a ${CHARACTER.name}?`);
-    await dialog.accept();
-  });
-  await page.getByRole("button", { name: "Eliminar" }).click();
+  await page.getByRole("button", { name: "Eliminar", exact: true }).click();
+  const dialog = page.getByRole("alertdialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText(new RegExp(CHARACTER.name))).toBeVisible();
+  await dialog.getByRole("button", { name: "Eliminar personaje" }).click();
 
   await expect(page).toHaveURL("/characters");
   await expect(
@@ -67,11 +67,12 @@ test("elimina un personaje desde la tarjeta del listado y llega al estado vacío
   const main = page.getByRole("main");
   await expect(main.getByText(CHARACTER.name)).toBeVisible();
 
-  page.once("dialog", async (dialog) => {
-    expect(dialog.message()).toBe(`¿Eliminar a ${CHARACTER.name}?`);
-    await dialog.accept();
-  });
+  // El botón de la card abre el diálogo; el confirmar vive en un portal fuera
+  // de `main`, así que lo buscamos por rol de alertdialog a nivel de página.
   await main.getByRole("button", { name: "Eliminar personaje" }).click();
+  const dialog = page.getByRole("alertdialog");
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Eliminar personaje" }).click();
 
   await expect(
     page.getByText("Todavía no creaste ningún personaje."),

@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { http, HttpResponse } from "msw";
 import type { CharacterListResponse } from "@tpklabs/browchar-contracts";
@@ -31,7 +37,6 @@ describe("CharacterCardContainer", () => {
   });
 
   it("elimina contra DELETE /characters/:id y saca al personaje de la cache del listado", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     let receivedUrl: string | undefined;
     let receivedMethod: string | undefined;
     server.use(
@@ -76,6 +81,10 @@ describe("CharacterCardContainer", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Eliminar personaje" }));
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Eliminar personaje" }),
+    );
 
     await waitFor(() => {
       const cached = queryClient.getQueryData<CharacterListResponse>(
