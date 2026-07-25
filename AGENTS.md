@@ -73,6 +73,22 @@ cobertura global baja de **88% statements / 82% branches / 85% functions /
 test pareado de arriba (excluye `*.types.ts`, `index.*`, `components/ui/` y
 `app/layout.tsx`, el shell RSC raíz; las pages con test pareado SÍ cuentan).
 
+## Preview de UI / design system (DEV-207)
+
+Para previsualizar los primitivos de `src/components/ui` en sus variantes **no
+se usa Storybook**: se implementa una **página interna kitchen-sink en
+`src/app/dev/`** (dev-only — `notFound()` si `NODE_ENV === "production"`, no
+linkeada desde la navegación). Se evaluó Storybook y se descartó por ahora
+(proyecto chico, componentes app-specific, la cobertura ya la dan los tests
+pareados + Playwright, y el costo de integrarlo con Next 16 / React 19 /
+Tailwind 4 + fuentes + dark toggle no se justifica). La página vive dentro de
+la app, así que hereda `layout.tsx` (fuentes Cinzel/Geist, `globals.css`,
+tokens) sin recrear entorno, y renderiza claro y oscuro lado a lado (un wrapper
+con `className="dark"`) — hoy la única forma de ejercitar el tema `.dark`, que
+está definido en `globals.css` pero **no tiene toggle en la app**. Si más
+adelante entra diseño o un 2º dev, reevaluar migrar a Storybook (las variantes
+ya quedan catalogadas en la página).
+
 ## E2E tests (DEV-199)
 
 `npm run test:e2e` corre Playwright (`e2e/*.spec.ts`, headless, Chromium)
