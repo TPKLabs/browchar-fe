@@ -158,6 +158,32 @@ Cada archivo nuevo bajo `src/app`, `src/components`, `src/hooks`, `src/types`,
 lado (lo exige el pre-commit), salvo exentos: `*.types.ts`, barrels `index.*`,
 y vendor `components/ui/`.
 
+## Feedback al usuario: toasts (DEV-75)
+
+Para avisos efímeros de éxito/error/info hay un sistema centralizado de toasts.
+El renderer (`Toaster`) se monta una sola vez en el layout raíz; para disparar
+un toast se importa la API `toast` desde `@/utils/toast` y se llama desde
+cualquier feature —hook, event handler o incluso una función fuera de un
+componente— sin pasar por contexto:
+
+```ts
+import { toast } from "@/utils/toast";
+
+toast.success("Personaje creado", {
+  description: "El personaje fue guardado correctamente.",
+});
+toast.error("No se pudo crear el personaje", {
+  description: "Revisá los datos e intentá nuevamente.",
+});
+toast.info("Sesión por expirar");
+```
+
+`toast.{success,error,info}(title, { description?, timeout? })` devuelve el id
+del toast; `toast.dismiss(id?)` cierra uno (o todos si se omite el id). Los
+errores se anuncian con prioridad alta (assertive) para lectores de pantalla; el
+resto, polite. El estilo (`components/ui/toast.tsx`) usa los tokens del tema y
+apila abajo a la derecha en desktop, ancho completo abajo en mobile.
+
 ## Scripts
 
 | Script                  | Qué hace                                                        |
