@@ -10,6 +10,7 @@ import { ArrowLeft, Loader2, Swords, Trash2 } from "lucide-react";
 import { ApiError } from "@/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/confirmationDialog";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,6 +118,7 @@ export function CharacterDetail({
   const router = useRouter();
   const [saveError, setSaveError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const isDeletingRef = useRef(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<
@@ -244,9 +246,8 @@ export function CharacterDetail({
     };
   }, []);
 
-  const handleDelete = async () => {
+  const handleConfirmDelete = async () => {
     if (isDeletingRef.current) return;
-    if (!window.confirm(`¿Eliminar a ${character.name}?`)) return;
 
     isDeletingRef.current = true;
     setDeleteError(null);
@@ -268,6 +269,7 @@ export function CharacterDetail({
       }
       isDeletingRef.current = false;
       setIsDeleting(false);
+      setConfirmOpen(false);
       setDeleteError(DELETE_ERROR_MESSAGE);
     }
   };
@@ -311,20 +313,11 @@ export function CharacterDetail({
               type="button"
               variant="destructive"
               size="sm"
-              onClick={handleDelete}
+              onClick={() => setConfirmOpen(true)}
               disabled={isBusy}
             >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="animate-spin" aria-hidden />
-                  Eliminando…
-                </>
-              ) : (
-                <>
-                  <Trash2 data-icon="inline-start" />
-                  Eliminar
-                </>
-              )}
+              <Trash2 data-icon="inline-start" />
+              Eliminar
             </Button>
             <Button type="submit" size="sm" disabled={!isDirty || isBusy}>
               {isSubmitting ? (
@@ -436,6 +429,16 @@ export function CharacterDetail({
           </CardContent>
         </Card>
       </form>
+
+      <ConfirmationDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Eliminar personaje"
+        description={`Esta acción eliminará a ${character.name} de tu colección. No se puede deshacer.`}
+        confirmLabel="Eliminar personaje"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

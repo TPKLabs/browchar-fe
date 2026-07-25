@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { http, HttpResponse } from "msw";
 
@@ -112,7 +118,6 @@ describe("CharacterDetailContainer", () => {
 
   it("elimina el personaje contra DELETE /characters/:id y vuelve al listado", async () => {
     useRouter.mockReturnValue({ replace });
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     mockCharacterAndPlaybook();
     let receivedUrl: string | undefined;
     let receivedMethod: string | undefined;
@@ -127,7 +132,11 @@ describe("CharacterDetailContainer", () => {
     renderWithClient(<CharacterDetailContainer characterId="char_1" />);
 
     await screen.findByLabelText(/Nombre/);
-    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar" }));
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Eliminar personaje" }),
+    );
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/characters"));
     expect(receivedUrl).toBe("/characters/char_1");
@@ -136,7 +145,6 @@ describe("CharacterDetailContainer", () => {
 
   it("vuelve al listado si el DELETE responde 404 (éxito terminal)", async () => {
     useRouter.mockReturnValue({ replace });
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     mockCharacterAndPlaybook();
     server.use(
       http.delete("/characters/:id", () =>
@@ -150,14 +158,17 @@ describe("CharacterDetailContainer", () => {
     renderWithClient(<CharacterDetailContainer characterId="char_1" />);
 
     await screen.findByLabelText(/Nombre/);
-    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar" }));
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Eliminar personaje" }),
+    );
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/characters"));
   });
 
   it("muestra un error y no navega si el DELETE falla con 500", async () => {
     useRouter.mockReturnValue({ replace });
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     mockCharacterAndPlaybook();
     server.use(
       http.delete("/characters/:id", () =>
@@ -168,7 +179,11 @@ describe("CharacterDetailContainer", () => {
     renderWithClient(<CharacterDetailContainer characterId="char_1" />);
 
     await screen.findByLabelText(/Nombre/);
-    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar" }));
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Eliminar personaje" }),
+    );
 
     expect(
       await screen.findByText(
