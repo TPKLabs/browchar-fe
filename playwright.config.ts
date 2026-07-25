@@ -32,8 +32,14 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     url: "http://localhost:3001",
-    reuseExistingServer: !process.env.CI,
-    env: { NEXT_PUBLIC_API_URL: API_PREFIX },
+    // Reutilizar un `next dev` local puede cargar NEXT_PUBLIC_API_URL desde
+    // `.env.local` y saltear por completo los mocks. El runner debe ser dueño
+    // del servidor para garantizar el namespace de API y el cache E2E.
+    reuseExistingServer: false,
+    env: {
+      BROWCHAR_E2E: "1",
+      NEXT_PUBLIC_API_URL: API_PREFIX,
+    },
     timeout: 120_000,
   },
 });

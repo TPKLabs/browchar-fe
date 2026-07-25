@@ -1,6 +1,6 @@
 import { QueryEmpty, QueryError, QueryLoading } from "@/components/queryState";
 import type { CharacterSummary } from "@/types";
-import { CharacterCard } from "./characterCard";
+import { CharacterCardContainer } from "./characterCardContainer";
 
 interface CharactersListProps {
   characters: CharacterSummary[];
@@ -36,7 +36,7 @@ export function CharactersList({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {characters.map((character) => (
-        <CharacterCard key={character.id} character={character} />
+        <CharacterCardContainer key={character.id} character={character} />
       ))}
     </div>
   );

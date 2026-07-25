@@ -7,6 +7,7 @@ import { ApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { QueryError, QueryLoading } from "@/components/queryState";
 import { useCharacter } from "@/hooks/useCharacter";
+import { useDeleteCharacter } from "@/hooks/useDeleteCharacter";
 import { usePlaybook } from "@/hooks/usePlaybook";
 import { useUpdateCharacter } from "@/hooks/useUpdateCharacter";
 import type { CharacterFormValues } from "@/schemas/characterSchema";
@@ -36,8 +37,10 @@ function BackLink() {
  * resuelto, su Playbook (`GET /playbooks/:id`) para poder etiquetar los
  * `values` con el `template` vigente. Delega el render a `CharacterDetail`,
  * que sigue siendo presentacional — acá se conecta `onSave` a
- * `useUpdateCharacter` (`PATCH /characters/:id`, DEV-68); `CharacterDetail`
- * solo sabe llamar el callback y mostrar loading/error, no de dónde sale.
+ * `useUpdateCharacter` (`PATCH /characters/:id`, DEV-68) y `onDelete` a
+ * `useDeleteCharacter` (`DELETE /characters/:id`, DEV-71/DEV-52);
+ * `CharacterDetail` solo sabe llamar los callbacks y mostrar loading/error, no
+ * de dónde salen.
  *
  * El 404 de `useCharacter` (personaje inexistente o soft-deleted, ver
  * `characters.service.ts` en browchar-api) se distingue de otros errores
@@ -54,9 +57,14 @@ export function CharacterDetailContainer({
     enabled: character.isSuccess,
   });
   const updateCharacter = useUpdateCharacter(characterId);
+  const deleteCharacter = useDeleteCharacter(characterId);
 
   const handleSave = async (values: CharacterFormValues) => {
     await updateCharacter.mutateAsync(values);
+  };
+
+  const handleDelete = async () => {
+    await deleteCharacter.mutateAsync();
   };
 
   if (character.isPending) {
@@ -108,6 +116,7 @@ export function CharacterDetailContainer({
       character={character.data}
       playbook={playbook.data}
       onSave={handleSave}
+      onDelete={handleDelete}
     />
   );
 }
