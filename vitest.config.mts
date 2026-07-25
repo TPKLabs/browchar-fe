@@ -26,6 +26,8 @@ export default defineConfig({
       // - components/ui/ → primitivos shadcn vendored.
       // - app/layout.tsx → shell RSC raíz (fuentes + html), sin lógica (análogo
       //   al bootstrap de la API). Las pages SÍ entran: tienen test pareado.
+      // - app/**/loading.tsx → shells de ruta del App Router (DEV-76): sólo
+      //   renderizan un skeleton/QueryLoading ya testeado, sin lógica propia.
       // - mocks/ → infraestructura de testing (handlers MSW, DEV-200), no
       //   lógica de app; sus ramas default (404/501 "sin handler configurado
       //   en este test") solo corren cuando un test NO las pisa, que por
@@ -37,6 +39,7 @@ export default defineConfig({
         "src/**/index.{ts,tsx}",
         "src/components/ui/**",
         "src/app/layout.tsx",
+        "src/app/**/loading.tsx",
         "src/mocks/**",
         "src/**/*.test.{ts,tsx}",
         "src/**/*.d.ts",

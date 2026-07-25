@@ -5,13 +5,14 @@ import { ArrowLeft } from "lucide-react";
 
 import { ApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
-import { QueryError, QueryLoading } from "@/components/queryState";
+import { QueryError } from "@/components/queryState";
 import { useCharacter } from "@/hooks/useCharacter";
 import { useDeleteCharacter } from "@/hooks/useDeleteCharacter";
 import { usePlaybook } from "@/hooks/usePlaybook";
 import { useUpdateCharacter } from "@/hooks/useUpdateCharacter";
 import type { CharacterFormValues } from "@/schemas/characterSchema";
 import { CharacterDetail } from "./characterDetail";
+import { CharacterDetailSkeleton } from "./characterDetailSkeleton";
 
 interface CharacterDetailContainerProps {
   characterId: string;
@@ -68,12 +69,7 @@ export function CharacterDetailContainer({
   };
 
   if (character.isPending) {
-    return (
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-10 sm:px-6">
-        <BackLink />
-        <QueryLoading label="Cargando personaje…" />
-      </div>
-    );
+    return <CharacterDetailSkeleton />;
   }
 
   if (character.isError) {
@@ -94,12 +90,7 @@ export function CharacterDetailContainer({
   }
 
   if (playbook.isPending) {
-    return (
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-10 sm:px-6">
-        <BackLink />
-        <QueryLoading label="Cargando personaje…" />
-      </div>
-    );
+    return <CharacterDetailSkeleton />;
   }
 
   if (playbook.isError) {

@@ -1,7 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-
+import { QueryError, QueryLoading } from "@/components/queryState";
 import { usePlaybooks } from "@/hooks/usePlaybooks";
 import { useCreateCharacter } from "@/hooks/useCreateCharacter";
 import { CharacterCreateForm } from "./characterCreateForm";
@@ -23,24 +22,17 @@ export function CharacterCreateFormContainer({
 
   if (isPending) {
     return (
-      <div
-        role="status"
-        className="text-muted-foreground mx-auto flex w-full max-w-2xl flex-1 items-center justify-center gap-2 px-4 py-10 text-sm sm:px-6"
-      >
-        <Loader2 className="size-4 animate-spin" aria-hidden />
-        Cargando playbooks…
+      <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6">
+        <QueryLoading label="Cargando playbooks…" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <p
-        role="alert"
-        className="text-destructive bg-destructive/10 mx-auto mt-10 w-full max-w-2xl rounded-lg p-4 text-sm"
-      >
-        No se pudieron cargar los playbooks. Intentá de nuevo más tarde.
-      </p>
+      <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6">
+        <QueryError label="No se pudieron cargar los playbooks. Intentá de nuevo más tarde." />
+      </div>
     );
   }
 
