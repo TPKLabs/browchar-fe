@@ -158,6 +158,33 @@ Cada archivo nuevo bajo `src/app`, `src/components`, `src/hooks`, `src/types`,
 lado (lo exige el pre-commit), salvo exentos: `*.types.ts`, barrels `index.*`,
 y vendor `components/ui/`.
 
+## Confirmar acciones destructivas (DEV-74)
+
+Para acciones irreversibles (borrar un personaje, una campaña, etc.) hay un
+`ConfirmationDialog` reutilizable en [`src/components/confirmationDialog.tsx`](src/components/confirmationDialog.tsx).
+Es genérico: no contiene lógica de dominio, sólo ejecuta las funciones que
+recibe. El padre controla la apertura (`open`/`onOpenChange`) y el estado de
+loading (`isLoading`, mientras corre la acción async: deshabilita ambos botones,
+muestra spinner y bloquea el cierre).
+
+```tsx
+const [open, setOpen] = useState(false);
+const del = useDeleteCharacter(id);
+
+<ConfirmationDialog
+  open={open}
+  onOpenChange={setOpen}
+  title="Eliminar personaje"
+  description={`Esta acción eliminará a ${name}. No se puede deshacer.`}
+  confirmLabel="Eliminar personaje"
+  isLoading={del.isPending}
+  onConfirm={() => del.mutate()}
+/>;
+```
+
+Ya está integrado en el borrado de personajes desde la tarjeta del listado
+(`characterCard`) y desde el detalle (`characterDetail`).
+
 ## Scripts
 
 | Script                  | Qué hace                                                        |
