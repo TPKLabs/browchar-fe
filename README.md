@@ -183,6 +183,7 @@ del toast; `toast.dismiss(id?)` cierra uno (o todos si se omite el id). Los
 errores se anuncian con prioridad alta (assertive) para lectores de pantalla; el
 resto, polite. El estilo (`components/ui/toast.tsx`) usa los tokens del tema y
 apila abajo a la derecha en desktop, ancho completo abajo en mobile.
+
 ## Estados de carga (DEV-76)
 
 El feedback de carga tiene tres piezas:
