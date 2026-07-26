@@ -1,12 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { http, HttpResponse } from "msw";
 
 import { server } from "@/mocks/server";
+import { toast } from "@/utils/toast";
 import type { CharacterCreateRequestBody } from "@/types";
 import { useCreateCharacter } from "./useCreateCharacter";
+
+vi.mock("@/utils/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), dismiss: vi.fn() },
+}));
+
+beforeEach(() => vi.clearAllMocks());
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -57,6 +64,7 @@ describe("useCreateCharacter", () => {
     expect(receivedUrl).toBe("/characters");
     expect(receivedMethod).toBe("POST");
     expect(receivedBody).toEqual(INPUT);
+    expect(toast.success).toHaveBeenCalledWith("Personaje creado");
   });
 
   it("expone el ApiError cuando el back rechaza (ej. 400 de validación)", async () => {
@@ -83,5 +91,25 @@ describe("useCreateCharacter", () => {
       status: 400,
       message: "Los datos del personaje no son válidos para el Playbook",
     });
+    // Validación → el form la muestra inline; no se dispara toast (DEV-75).
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("dispara un toast de error ante un error genérico (500)", async () => {
+    server.use(
+      http.post("/characters", () =>
+        HttpResponse.json({ message: "boom" }, { status: 500 }),
+      ),
+    );
+
+    const { result } = renderHook(() => useCreateCharacter(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate(INPUT);
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(toast.error).toHaveBeenCalledWith("No se pudo crear el personaje");
+    expect(toast.success).not.toHaveBeenCalled();
   });
 });
