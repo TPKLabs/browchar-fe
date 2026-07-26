@@ -183,6 +183,7 @@ del toast; `toast.dismiss(id?)` cierra uno (o todos si se omite el id). Los
 errores se anuncian con prioridad alta (assertive) para lectores de pantalla; el
 resto, polite. El estilo (`components/ui/toast.tsx`) usa los tokens del tema y
 apila abajo a la derecha en desktop, ancho completo abajo en mobile.
+
 ## Confirmar acciones destructivas (DEV-74)
 
 Para acciones irreversibles (borrar un personaje, una campaña, etc.) hay un
