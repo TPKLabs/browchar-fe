@@ -6,6 +6,7 @@ import type {
 } from "@tpklabs/browchar-contracts";
 
 import { ApiError, apiClient } from "@/api/client";
+import { toast } from "@/utils/toast";
 import { characterQueryKey } from "@/hooks/useCharacter";
 
 /**
@@ -75,6 +76,12 @@ export function useDeleteCharacter(id: CharacterDeleteRequestParams["id"]) {
         exact: true,
       });
       void queryClient.invalidateQueries({ queryKey: ["characters"] });
+      toast.success("Personaje eliminado");
+    },
+    onError: () => {
+      // Un 404 ya se resolvió como éxito en `mutationFn`; acá solo llegan
+      // errores genuinos (500/red) — no hay caso de validación para DELETE.
+      toast.error("No se pudo eliminar el personaje");
     },
   });
 }

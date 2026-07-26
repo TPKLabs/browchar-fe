@@ -1,15 +1,22 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { http, HttpResponse } from "msw";
 
 import { server } from "@/mocks/server";
+import { toast } from "@/utils/toast";
 import { characterQueryKey } from "./useCharacter";
 import {
   useUpdateCharacter,
   type UpdateCharacterInput,
 } from "./useUpdateCharacter";
+
+vi.mock("@/utils/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), dismiss: vi.fn() },
+}));
+
+beforeEach(() => vi.clearAllMocks());
 
 function createWrapper(queryClient: QueryClient) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -73,6 +80,7 @@ describe("useUpdateCharacter", () => {
     expect(receivedUrl).toBe("/characters/char_1");
     expect(receivedMethod).toBe("PATCH");
     expect(receivedBody).toEqual(INPUT);
+    expect(toast.success).toHaveBeenCalledWith("Cambios guardados");
   });
 
   it("escribe el personaje actualizado en la cache de useCharacter", async () => {
@@ -139,6 +147,8 @@ describe("useUpdateCharacter", () => {
       status: 400,
       message: "Los datos del personaje no son válidos para el Playbook",
     });
+    // Validación → inline en el form; sin toast (DEV-75).
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it("expone el ApiError cuando el personaje no existe (404)", async () => {
@@ -162,5 +172,9 @@ describe("useUpdateCharacter", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toMatchObject({ status: 404 });
+    // 404 no es validación (sin `errors`) → sí dispara toast de error.
+    expect(toast.error).toHaveBeenCalledWith(
+      "No se pudieron guardar los cambios",
+    );
   });
 });

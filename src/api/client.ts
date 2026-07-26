@@ -34,6 +34,15 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * ¿El error trae el envelope de validación del back (`{ message, errors }`)?
+ * En ese caso el detalle por campo se muestra inline en el form (DEV-48/DEV-68),
+ * así que el feedback global por toast se omite para no duplicar (DEV-75).
+ */
+export function isValidationError(error: unknown): error is ApiError {
+  return error instanceof ApiError && error.errors !== undefined;
+}
+
 export interface ApiRequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
 }

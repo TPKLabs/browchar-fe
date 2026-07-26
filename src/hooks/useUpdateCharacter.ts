@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CharacterUpdateRequestBody as UpdateCharacterContract } from "@tpklabs/browchar-contracts";
 
-import { apiClient } from "@/api/client";
+import { apiClient, isValidationError } from "@/api/client";
+import { toast } from "@/utils/toast";
 import type { CharacterUpdateResponse } from "@tpklabs/browchar-contracts";
 import { characterQueryKey } from "./useCharacter";
 
@@ -33,6 +34,13 @@ export function useUpdateCharacter(id: string) {
     onSuccess: (character) => {
       queryClient.setQueryData(characterQueryKey(id), character);
       queryClient.invalidateQueries({ queryKey: ["characters"] });
+      toast.success("Cambios guardados");
+    },
+    onError: (error) => {
+      // Validaciones (400 con `errors`) → inline en el form; toast solo para
+      // errores genéricos (red/500) — DEV-75.
+      if (isValidationError(error)) return;
+      toast.error("No se pudieron guardar los cambios");
     },
   });
 }

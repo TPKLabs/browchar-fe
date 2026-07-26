@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
@@ -12,6 +12,13 @@ import { characterQueryKey } from "@/hooks/useCharacter";
 import { charactersQueryKey } from "@/hooks/useCharacters";
 import { useDeleteCharacter } from "@/hooks/useDeleteCharacter";
 import { server } from "@/mocks/server";
+import { toast } from "@/utils/toast";
+
+vi.mock("@/utils/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), dismiss: vi.fn() },
+}));
+
+beforeEach(() => vi.clearAllMocks());
 
 function createWrapper(queryClient: QueryClient) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -88,6 +95,7 @@ describe("useDeleteCharacter", () => {
 
     expect(receivedUrl).toBe("/characters/char_1");
     expect(receivedMethod).toBe("DELETE");
+    expect(toast.success).toHaveBeenCalledWith("Personaje eliminado");
   });
 
   it("saca al personaje de las páginas cacheadas del listado y decrementa el total", async () => {
@@ -172,6 +180,9 @@ describe("useDeleteCharacter", () => {
       charactersQueryKey({ page: 1, pageSize: 20 }),
     );
     expect(cached?.data.map((c) => c.id)).toEqual(["char_2"]);
+    // 404 = éxito terminal → toast de éxito, no de error.
+    expect(toast.success).toHaveBeenCalledWith("Personaje eliminado");
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it("propaga un error genuino (500) sin tocar la cache", async () => {
@@ -196,5 +207,9 @@ describe("useDeleteCharacter", () => {
       charactersQueryKey({ page: 1, pageSize: 20 }),
     );
     expect(cached?.data.map((c) => c.id)).toEqual(["char_1", "char_2"]);
+    expect(toast.error).toHaveBeenCalledWith(
+      "No se pudo eliminar el personaje",
+    );
+    expect(toast.success).not.toHaveBeenCalled();
   });
 });
