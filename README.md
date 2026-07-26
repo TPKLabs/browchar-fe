@@ -183,6 +183,22 @@ del toast; `toast.dismiss(id?)` cierra uno (o todos si se omite el id). Los
 errores se anuncian con prioridad alta (assertive) para lectores de pantalla; el
 resto, polite. El estilo (`components/ui/toast.tsx`) usa los tokens del tema y
 apila abajo a la derecha en desktop, ancho completo abajo en mobile.
+## Estados de carga (DEV-76)
+
+El feedback de carga tiene tres piezas:
+
+- **`QueryLoading` / `QueryError` / `QueryEmpty`** ([`src/components/queryState.tsx`](src/components/queryState.tsx))
+  — bloques compartidos para los estados de un `useQuery`. Todo loading pasa por
+  acá (no hay spinners sueltos por pantalla).
+- **Skeletons con forma** — para listas y detalle de personajes se usan
+  placeholders que copian el layout real (`charactersListSkeleton`,
+  `characterDetailSkeleton`) en vez de un spinner genérico, así la transición no
+  salta de layout. Se muestran mientras la query está `isPending`.
+- **`loading.tsx` de ruta** — cada segmento del App Router
+  (`/characters`, `/characters/[id]`, `/characters/new`, `/games`, `/playbooks`)
+  tiene su `loading.tsx`, que el framework muestra al instante durante la
+  navegación reusando el skeleton/`QueryLoading` correspondiente. Son shells sin
+  lógica (exentos de test pareado y de coverage, igual que `app/layout.tsx`).
 
 ## Confirmar acciones destructivas (DEV-74)
 

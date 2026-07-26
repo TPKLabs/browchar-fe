@@ -1,6 +1,7 @@
-import { QueryEmpty, QueryError, QueryLoading } from "@/components/queryState";
+import { QueryEmpty, QueryError } from "@/components/queryState";
 import type { CharacterSummary } from "@/types";
 import { CharacterCardContainer } from "./characterCardContainer";
+import { CharactersListSkeleton } from "./charactersListSkeleton";
 
 interface CharactersListProps {
   characters: CharacterSummary[];
@@ -20,7 +21,7 @@ export function CharactersList({
   isError,
 }: CharactersListProps) {
   if (isPending) {
-    return <QueryLoading label="Cargando personajes…" />;
+    return <CharactersListSkeleton />;
   }
 
   if (isError) {

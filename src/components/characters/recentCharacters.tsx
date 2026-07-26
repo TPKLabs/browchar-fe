@@ -1,9 +1,10 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { QueryError, QueryLoading } from "@/components/queryState";
+import { QueryError } from "@/components/queryState";
 import { useCharacters } from "@/hooks/useCharacters";
 import { CharacterCardContainer } from "./characterCardContainer";
+import { CharactersListSkeleton } from "./charactersListSkeleton";
 import { toCharacterSummary } from "./toCharacterSummary";
 
 /** Cuántos personajes recientes muestra la home. */
@@ -25,7 +26,7 @@ export function RecentCharacters() {
   });
 
   if (isPending) {
-    return <QueryLoading label="Cargando personajes…" />;
+    return <CharactersListSkeleton count={RECENT_LIMIT} />;
   }
 
   if (isError) {

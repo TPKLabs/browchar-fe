@@ -35,6 +35,10 @@ const EXEMPT_PATTERNS = [
   /\.d\.ts$/,
   /\.types\.ts$/,
   /(^|\/)index\.tsx?$/,
+  // Archivos especiales del App Router (loading/error/not-found): shells de
+  // ruta sin lógica propia, sólo renderizan un componente ya testeado — mismo
+  // criterio que `app/layout.tsx` (ver también el exclude de coverage).
+  /(^|\/)app\/.*(loading|error|not-found)\.tsx$/,
   /(^|\/)components\/ui\//, // shadcn/ui vendor primitives
   // src/mocks/** (DEV-200): infraestructura de testing MSW (handlers/server),
   // no lógica de app — la ejercita cada test que la usa vía server.use(...).
