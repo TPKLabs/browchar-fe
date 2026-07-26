@@ -174,6 +174,7 @@ El feedback de carga tiene tres piezas:
   tiene su `loading.tsx`, que el framework muestra al instante durante la
   navegación reusando el skeleton/`QueryLoading` correspondiente. Son shells sin
   lógica (exentos de test pareado y de coverage, igual que `app/layout.tsx`).
+
 ## Confirmar acciones destructivas (DEV-74)
 
 Para acciones irreversibles (borrar un personaje, una campaña, etc.) hay un
