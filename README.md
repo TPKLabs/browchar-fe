@@ -158,6 +158,50 @@ Cada archivo nuevo bajo `src/app`, `src/components`, `src/hooks`, `src/types`,
 lado (lo exige el pre-commit), salvo exentos: `*.types.ts`, barrels `index.*`,
 y vendor `components/ui/`.
 
+## Estados de carga (DEV-76)
+
+El feedback de carga tiene tres piezas:
+
+- **`QueryLoading` / `QueryError` / `QueryEmpty`** ([`src/components/queryState.tsx`](src/components/queryState.tsx))
+  — bloques compartidos para los estados de un `useQuery`. Todo loading pasa por
+  acá (no hay spinners sueltos por pantalla).
+- **Skeletons con forma** — para listas y detalle de personajes se usan
+  placeholders que copian el layout real (`charactersListSkeleton`,
+  `characterDetailSkeleton`) en vez de un spinner genérico, así la transición no
+  salta de layout. Se muestran mientras la query está `isPending`.
+- **`loading.tsx` de ruta** — cada segmento del App Router
+  (`/characters`, `/characters/[id]`, `/characters/new`, `/games`, `/playbooks`)
+  tiene su `loading.tsx`, que el framework muestra al instante durante la
+  navegación reusando el skeleton/`QueryLoading` correspondiente. Son shells sin
+  lógica (exentos de test pareado y de coverage, igual que `app/layout.tsx`).
+
+## Confirmar acciones destructivas (DEV-74)
+
+Para acciones irreversibles (borrar un personaje, una campaña, etc.) hay un
+`ConfirmationDialog` reutilizable en [`src/components/confirmationDialog.tsx`](src/components/confirmationDialog.tsx).
+Es genérico: no contiene lógica de dominio, sólo ejecuta las funciones que
+recibe. El padre controla la apertura (`open`/`onOpenChange`) y el estado de
+loading (`isLoading`, mientras corre la acción async: deshabilita ambos botones,
+muestra spinner y bloquea el cierre).
+
+```tsx
+const [open, setOpen] = useState(false);
+const del = useDeleteCharacter(id);
+
+<ConfirmationDialog
+  open={open}
+  onOpenChange={setOpen}
+  title="Eliminar personaje"
+  description={`Esta acción eliminará a ${name}. No se puede deshacer.`}
+  confirmLabel="Eliminar personaje"
+  isLoading={del.isPending}
+  onConfirm={() => del.mutate()}
+/>;
+```
+
+Ya está integrado en el borrado de personajes desde la tarjeta del listado
+(`characterCard`) y desde el detalle (`characterDetail`).
+
 ## Scripts
 
 | Script                  | Qué hace                                                        |

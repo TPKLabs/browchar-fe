@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 
 import { ApiError } from "@/api/client";
@@ -380,9 +381,14 @@ describe("CharacterDetail", () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('"Eliminar" pide confirmación y, al aceptar, llama a onDelete y vuelve al listado', async () => {
+  /** Abre el diálogo de confirmación desde el botón "Eliminar" del detalle. */
+  async function openConfirmDialog() {
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar" }));
+    return screen.findByRole("alertdialog", { name: "Eliminar personaje" });
+  }
+
+  it('"Eliminar" abre el diálogo y, al confirmar, llama a onDelete y vuelve al listado', async () => {
     useRouter.mockReturnValue({ replace });
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     const onDelete = vi.fn().mockResolvedValue(undefined);
 
     render(
@@ -392,16 +398,20 @@ describe("CharacterDetail", () => {
         onDelete={onDelete}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+    const dialog = await openConfirmDialog();
+    expect(
+      within(dialog).getByText(/Esta acción eliminará a Doc/),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Eliminar personaje" }),
+    );
 
-    expect(confirmSpy).toHaveBeenCalledWith("¿Eliminar a Doc?");
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/characters"));
     expect(onDelete).toHaveBeenCalledOnce();
   });
 
-  it("Eliminar no llama a onDelete ni navega si se cancela la confirmación", () => {
+  it("Eliminar no llama a onDelete ni navega si se cancela en el diálogo", async () => {
     useRouter.mockReturnValue({ replace });
-    vi.spyOn(window, "confirm").mockReturnValue(false);
     const onDelete = vi.fn().mockResolvedValue(undefined);
 
     render(
@@ -411,8 +421,12 @@ describe("CharacterDetail", () => {
         onDelete={onDelete}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+    const dialog = await openConfirmDialog();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancelar" }));
 
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
     expect(onDelete).not.toHaveBeenCalled();
     expect(replace).not.toHaveBeenCalled();
   });
@@ -421,12 +435,11 @@ describe("CharacterDetail", () => {
     useRouter.mockReturnValue({ push });
     render(<CharacterDetail character={character} playbook={playbook} />);
 
-    expect(screen.getByRole("button", { name: /Eliminar/ })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: "Eliminar" })).not.toBeDisabled();
   });
 
-  it('muestra "Eliminando…" y deshabilita el botón mientras onDelete está pendiente', async () => {
+  it("muestra loading en el diálogo mientras onDelete está pendiente", async () => {
     useRouter.mockReturnValue({ replace });
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     let resolveDelete!: () => void;
     const onDelete = vi.fn(
       () =>
@@ -442,17 +455,18 @@ describe("CharacterDetail", () => {
         onDelete={onDelete}
       />,
     );
-    const nameInput = screen.getByLabelText(/Nombre/);
-    fireEvent.change(nameInput, { target: { value: "Doc editado" } });
-    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+    const dialog = await openConfirmDialog();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Eliminar personaje" }),
+    );
 
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /Eliminando/ })).toBeDisabled(),
+      expect(
+        within(dialog).getByRole("button", { name: "Eliminar personaje" }),
+      ).toBeDisabled(),
     );
-    expect(nameInput).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Cancelar" })).toBeDisabled();
     expect(
-      screen.getByRole("button", { name: "Guardar cambios" }),
+      within(dialog).getByRole("button", { name: "Cancelar" }),
     ).toBeDisabled();
     expect(replace).not.toHaveBeenCalled();
 
@@ -462,7 +476,6 @@ describe("CharacterDetail", () => {
 
   it("vuelve al listado cuando onDelete rechaza con un 404 (éxito terminal)", async () => {
     useRouter.mockReturnValue({ replace });
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     const onDelete = vi
       .fn()
       .mockRejectedValue(new ApiError(404, "Character char_1 no encontrado"));
@@ -474,7 +487,10 @@ describe("CharacterDetail", () => {
         onDelete={onDelete}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+    const dialog = await openConfirmDialog();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Eliminar personaje" }),
+    );
 
     // Un 404 = el personaje ya no está: se reconcilia como éxito y se vuelve al
     // listado, sin dejar un mensaje de error en un detalle que ya no existe.
@@ -486,9 +502,8 @@ describe("CharacterDetail", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("muestra un mensaje genérico cuando onDelete rechaza con un error inesperado", async () => {
+  it("cierra el diálogo y muestra un mensaje genérico cuando onDelete falla", async () => {
     useRouter.mockReturnValue({ replace });
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     const onDelete = vi.fn().mockRejectedValue(new Error("network down"));
 
     render(
@@ -498,15 +513,21 @@ describe("CharacterDetail", () => {
         onDelete={onDelete}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Eliminar/ }));
+    const dialog = await openConfirmDialog();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Eliminar personaje" }),
+    );
 
     expect(
       await screen.findByText(
         "No se pudo eliminar el personaje. Intentá de nuevo más tarde.",
       ),
     ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
     expect(replace).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: /Eliminar/ })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: "Eliminar" })).not.toBeDisabled();
   });
 
   describe("auto-save (DEV-65)", () => {
